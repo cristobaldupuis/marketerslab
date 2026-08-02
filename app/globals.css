@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/*
+  Marketers Lab — visual system.
+
+  Direction: a laboratory record, not a marketing dashboard. Pale ruled paper,
+  ink-black type, monospace for anything that is a measurement or an identifier.
+  Colour is rationed and always semantic:
+
+    navy   — franchise (the known business)
+    ochre  — loonshot  (the speculative one; always drawn with a dashed edge)
+    blue   — running   (the only "live" colour in the system)
+    green  — won
+    rust   — lost
+    violet — used exactly once, on the pre-registration stamp, so the eye goes
+             straight to the thing proving criteria were set before launch
+
+  Everything else is neutral. If a new colour is needed, take one away first.
+*/
+
+@theme {
+  --color-paper: #f2f3ef;
+  --color-paper-deep: #e8eae3;
+  --color-surface: #ffffff;
+  --color-sunk: #eceee7;
+
+  --color-ink: #12171e;
+  --color-ink-2: #414a56;
+  --color-ink-3: #6f7986;
+  --color-ink-4: #9aa2ac;
+
+  --color-rule: #dcdfd6;
+  --color-rule-2: #c6cabd;
+
+  --color-franchise: #22407a;
+  --color-franchise-tint: #e6eaf3;
+  --color-loonshot: #8a5900;
+  --color-loonshot-tint: #f6eeda;
+
+  --color-live: #0b6bbd;
+  --color-live-tint: #e0ecf7;
+  --color-won: #0c6149;
+  --color-won-tint: #dfeee8;
+  --color-lost: #99381f;
+  --color-lost-tint: #f5e5df;
+  --color-stopped: #58626f;
+  --color-stopped-tint: #e7e9e6;
+
+  --color-stamp: #5a3e9b;
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
+
+  --ease-dial: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tabular figures wherever numbers carry meaning, which here is everywhere. */
+  :where(body) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@utility field-label {
+  /* The eyebrow that labels every structural region. Reads as a field name on a
+     record, which is what it is. */
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+@utility grid-paper {
+  /* Faint graph-paper grid. Used only on the masthead band — the point is to
+     place the product on ruled paper once, not to texture every surface. */
+  background-image:
+    linear-gradient(to right, rgba(18, 23, 30, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 23, 30, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: -1px -1px;
+}
+
+/* ---- Motion ------------------------------------------------------------- */
+
+@keyframes ml-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes ml-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ml-stamp-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-2.5deg) scale(1.45);
+  }
+  70% {
+    opacity: 1;
+    transform: rotate(-2.5deg) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-2.5deg) scale(1);
+  }
+}
+
+.animate-live-pulse {
+  animation: ml-live-pulse 2.4s var(--ease-dial) infinite;
+}
+
+/* Staggered reveal for the deep-view sections. Delay is set inline per section
+   so the record unfolds top-down rather than appearing all at once. */
+.deep-section {
+  animation: ml-rise 460ms var(--ease-dial) backwards;
+}
+
+.stamp-in {
+  animation: ml-stamp-in 520ms var(--ease-dial) 140ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
