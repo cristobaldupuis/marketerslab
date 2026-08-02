@@ -36,3 +36,15 @@ export function formatCount(n: number): string {
 export function formatPercent(n: number): string {
   return `${(n * 100).toFixed(0)}%`;
 }
+
+/** A relative treatment effect. Always signed — an unsigned effect in a segment
+ *  read is the exact ambiguity the tree exists to remove. Uses a real minus
+ *  sign so the column of figures stays optically aligned. */
+export function formatEffect(n: number): string {
+  return `${n < 0 ? "−" : "+"}${Math.abs(n).toFixed(1)}%`;
+}
+
+/** Share of population, as carried on a segment node (0–1). */
+export function formatShare(n: number): string {
+  return `${(n * 100).toFixed(0)}%`;
+}

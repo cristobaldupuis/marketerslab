@@ -160,6 +160,162 @@
   animation: ml-stamp-in 520ms var(--ease-dial) 140ms backwards;
 }
 
+/* Node reveal for the segment tree, and the panel swap when a node is picked.
+   Same rise as the deep sections, shorter — a node is a smaller unit than a
+   section and should not take as long to arrive. */
+.tree-rise {
+  animation: ml-rise 380ms var(--ease-dial) backwards;
+}
+
+/* ---- Segment tree ------------------------------------------------------- */
+
+/*
+  The tree draws its own connectors with borders on pseudo-elements rather than
+  a measured SVG overlay. That is not a shortcut — it is what lets the same
+  markup be a left-to-right dendrogram on a desktop and an indented outline on
+  a phone, with no layout measurement, no ref plumbing and no effect.
+
+  Geometry, wide: [ node ]--stub--|spine|--stub--[ child ]
+  Every level is a fixed column width so the columns line up down the tree; each
+  branch centres on its own subtree, so the elbows always meet a node's middle.
+*/
+
+.tree-sub {
+  display: flex;
+  align-items: center;
+}
+
+.tree-cell {
+  position: relative;
+  flex: 0 0 232px;
+  /* Without this the automatic minimum size of a flex item lets a long split
+     label push the column wider than its basis, and the levels stop lining up
+     down the tree. The label truncates instead. */
+  min-width: 0;
+}
+
+/* Outgoing stub from a node that has children. */
+.tree-cell[data-parent="true"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -20px;
+  width: 20px;
+  border-top: 1px solid var(--color-rule-2);
+}
+
+.tree-kids {
+  display: flex;
+  flex-direction: column;
+  margin-left: 40px;
+}
+
+.tree-branch {
+  position: relative;
+  padding: 5px 0;
+}
+
+/* Incoming stub to this child. */
+.tree-branch::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  width: 20px;
+  border-top: 1px solid var(--color-rule-2);
+}
+
+/* Vertical spine. Clipped to a half-height on the first and last child so the
+   line stops at the outermost elbows instead of overshooting them. */
+.tree-branch::after {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--color-rule-2);
+}
+
+.tree-branch[data-first="true"]::after {
+  top: 50%;
+}
+
+.tree-branch[data-last="true"]::after {
+  bottom: 50%;
+}
+
+.tree-branch[data-first="true"][data-last="true"]::after {
+  display: none;
+}
+
+/* The reasoning path from root to the selected node, drawn on the connectors
+   that carry it. This is the traceability requirement made visible. */
+.tree-cell[data-on-path="true"]::after,
+.tree-branch[data-on-path="true"]::before {
+  border-color: var(--color-ink);
+}
+
+/*
+  Narrow: the dendrogram stops being the right shape well before it stops
+  fitting, so it becomes an indented outline — the same nodes, the same order,
+  with depth carried by the rail instead of by a column.
+*/
+@media (max-width: 1023px) {
+  .tree-sub {
+    display: block;
+  }
+
+  .tree-cell {
+    flex: none;
+    /* A node card spanning a tablet's full width strands the effect figure at
+       one end and the sample at the other, and flattens the interval bar to
+       nothing. Cap it at a readable measure. */
+    max-width: 520px;
+  }
+
+  .tree-cell[data-parent="true"]::after {
+    display: none;
+  }
+
+  .tree-kids {
+    margin-left: 0;
+    padding-left: 22px;
+  }
+
+  .tree-branch {
+    padding: 10px 0 0;
+  }
+
+  /* Elbow meets the node card a fixed distance down, so cards of different
+     heights still connect at a consistent point. */
+  .tree-branch::before {
+    top: 32px;
+    left: -22px;
+    width: 22px;
+  }
+
+  .tree-branch::after {
+    left: -22px;
+    top: 0;
+    bottom: 0;
+  }
+
+  .tree-branch[data-first="true"]::after {
+    top: 0;
+  }
+
+  .tree-branch[data-last="true"]::after {
+    bottom: auto;
+    height: 32px;
+  }
+
+  .tree-branch[data-first="true"][data-last="true"]::after {
+    display: block;
+    bottom: auto;
+    height: 32px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
