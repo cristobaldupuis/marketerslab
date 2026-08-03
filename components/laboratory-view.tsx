@@ -2,8 +2,10 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { BRAND_BY_ID } from "@/lib/data/brands";
 import { daysBetween, formatCount, formatDate, formatEffect, formatPercent } from "@/lib/format";
+import { eligibleForRoadmap } from "@/lib/generate/facts";
 import { CONSISTENCY_COPY, type ExperimentFamily, type PatternStudy } from "@/lib/patterns";
 import { effectTone } from "@/lib/segments";
 import { RIGOR_BY, RISK_BY } from "@/lib/taxonomy";
@@ -113,6 +115,7 @@ function ExperimentTab({
       <Section eyebrow="02" title="Segment analysis" delay={80}>
         <TreeSlot experiment={e} />
         <FamilyPrompt experiment={e} family={family} onOpenPatterns={onOpenPatterns} />
+        <RoadmapPrompt experiment={e} />
       </Section>
 
       <Section eyebrow="03" title="Kill criteria" delay={160}>
@@ -493,6 +496,32 @@ function FamilyPrompt({
         View patterns →
       </span>
     </button>
+  );
+}
+
+/** Sits under the tree, next to the pattern prompt — the same beat, aimed at
+ *  the Supercomputer instead of the Patterns tab. Only appears where the
+ *  roadmap generator actually has a lever to read: a completed record with a
+ *  segment tree. See `lib/generate/facts.ts`. */
+function RoadmapPrompt({ experiment: e }: { experiment: Experiment }) {
+  if (!eligibleForRoadmap(e)) return null;
+
+  return (
+    <Link
+      href={`/supercomputer?tab=roadmap&id=${e.id}`}
+      className="group mt-4 flex w-full flex-col gap-3 rounded-[6px] border border-rule bg-surface px-4 py-3.5 text-left transition-colors hover:border-ink sm:flex-row sm:items-center sm:gap-5 sm:px-5"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="field-label">Next test</p>
+        <p className="mt-2 text-[14px] leading-snug text-ink">
+          Run the roadmap generator on this record — it reads the tree above and proposes what to test next,
+          built on the segment that actually drove the result.
+        </p>
+      </div>
+      <span className="shrink-0 self-start rounded-[4px] border border-ink px-3 py-2 font-mono text-[11px] leading-none tracking-[0.08em] text-ink uppercase transition-colors group-hover:bg-ink group-hover:text-paper sm:self-auto">
+        Generate roadmap →
+      </span>
+    </Link>
   );
 }
 

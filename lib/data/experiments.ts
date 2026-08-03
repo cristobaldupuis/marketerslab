@@ -82,7 +82,7 @@ export const EXPERIMENTS: Experiment[] = [
           label: "3+ prior orders in 90 days",
           share: 0.38,
           n: 16614,
-          effect: 9.8,
+          effect: 9.0,
           interval: [7.4, 12.2],
           split: "Average basket value",
           note: "Established households. Almost the entire topline gain lives in this branch.",
