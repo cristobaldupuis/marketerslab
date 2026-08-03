@@ -52,6 +52,113 @@
   --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", monospace;
 
   --ease-dial: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --sidebar-width: 232px;
+}
+
+/*
+  Dark mode extends the same semantic tokens above rather than replacing them —
+  every component already renders through `bg-paper`, `text-ink-2`, `border-rule`
+  and so on, so flipping these custom properties repaints the whole system with
+  no component changes. Three states: explicit `data-theme="light"` and
+  `data-theme="dark"` (set by the sidebar toggle, persisted in localStorage) each
+  win outright; with no attribute, the OS preference decides. See
+  `components/theme-toggle.tsx` for how the attribute gets set, and the inline
+  script in `app/layout.tsx` for why it happens before first paint.
+*/
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #15171b;
+    --color-paper-deep: #101216;
+    --color-surface: #1c1f24;
+    --color-sunk: #101216;
+
+    --color-ink: #edeef0;
+    --color-ink-2: #b7bcc4;
+    --color-ink-3: #868d97;
+    --color-ink-4: #5c626c;
+
+    --color-rule: #262a31;
+    --color-rule-2: #333944;
+
+    --color-franchise: #7fa3ea;
+    --color-franchise-tint: #1c2740;
+    --color-loonshot: #d9a441;
+    --color-loonshot-tint: #382c11;
+
+    --color-live: #4da3e8;
+    --color-live-tint: #142a3d;
+    --color-won: #4cbd93;
+    --color-won-tint: #10241c;
+    --color-lost: #e2775a;
+    --color-lost-tint: #2c1712;
+    --color-stopped: #8b93a0;
+    --color-stopped-tint: #22262c;
+
+    --color-stamp: #b49ce8;
+  }
+}
+
+:root[data-theme="light"] {
+  --color-paper: #f2f3ef;
+  --color-paper-deep: #e8eae3;
+  --color-surface: #ffffff;
+  --color-sunk: #eceee7;
+
+  --color-ink: #12171e;
+  --color-ink-2: #414a56;
+  --color-ink-3: #6f7986;
+  --color-ink-4: #9aa2ac;
+
+  --color-rule: #dcdfd6;
+  --color-rule-2: #c6cabd;
+
+  --color-franchise: #22407a;
+  --color-franchise-tint: #e6eaf3;
+  --color-loonshot: #8a5900;
+  --color-loonshot-tint: #f6eeda;
+
+  --color-live: #0b6bbd;
+  --color-live-tint: #e0ecf7;
+  --color-won: #0c6149;
+  --color-won-tint: #dfeee8;
+  --color-lost: #99381f;
+  --color-lost-tint: #f5e5df;
+  --color-stopped: #58626f;
+  --color-stopped-tint: #e7e9e6;
+
+  --color-stamp: #5a3e9b;
+}
+
+:root[data-theme="dark"] {
+  --color-paper: #15171b;
+  --color-paper-deep: #101216;
+  --color-surface: #1c1f24;
+  --color-sunk: #101216;
+
+  --color-ink: #edeef0;
+  --color-ink-2: #b7bcc4;
+  --color-ink-3: #868d97;
+  --color-ink-4: #5c626c;
+
+  --color-rule: #262a31;
+  --color-rule-2: #333944;
+
+  --color-franchise: #7fa3ea;
+  --color-franchise-tint: #1c2740;
+  --color-loonshot: #d9a441;
+  --color-loonshot-tint: #382c11;
+
+  --color-live: #4da3e8;
+  --color-live-tint: #142a3d;
+  --color-won: #4cbd93;
+  --color-won-tint: #10241c;
+  --color-lost: #e2775a;
+  --color-lost-tint: #2c1712;
+  --color-stopped: #8b93a0;
+  --color-stopped-tint: #22262c;
+
+  --color-stamp: #b49ce8;
 }
 
 @layer base {
@@ -66,6 +173,7 @@
     font-synthesis-weight: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition: background-color 180ms var(--ease-dial), color 180ms var(--ease-dial);
   }
 
   /* Tabular figures wherever numbers carry meaning, which here is everywhere. */
