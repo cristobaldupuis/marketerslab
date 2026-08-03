@@ -5,42 +5,59 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRANDS } from "@/lib/data/brands";
 import { EXPERIMENTS } from "@/lib/data/experiments";
+import {
+  LabMark,
+  ObservatoryIcon,
+  QuarantineIcon,
+  SupercomputerIcon,
+  VivariumIcon,
+} from "./nav-icons";
 import { ThemeToggle } from "./theme-toggle";
 
 type Section = {
-  mark: string;
+  icon: (props: { className?: string }) => React.ReactNode;
   name: string;
-  blurb: string;
   href: string;
-  /** Sections keyed to a single record (Laboratory, Microscope) only resolve to
-   *  a real destination once a record is already in view — see `currentId`. */
-  needsRecord?: boolean;
-  /** Not built yet (Pass C / Pass D) — shown so the six-section IA reads as a
-   *  whole even before every room has something in it. */
+  /** Not built yet (Pass C) — shown so the group reads as a whole even
+   *  before every room in it has something to show. */
   comingSoon?: boolean;
 };
 
-const SECTIONS: Section[] = [
-  { mark: "OB", name: "Observatory", blurb: "Every record, at a glance", href: "/observatory" },
-  { mark: "VV", name: "Vivarium", blurb: "What's running right now", href: "/vivarium" },
-  { mark: "MC", name: "Microscope", blurb: "Close read of one record", href: "/microscope", needsRecord: true },
-  { mark: "LB", name: "Laboratory", blurb: "Design, evidence, patterns", href: "/laboratory", needsRecord: true },
-  { mark: "QT", name: "Quarantine", blurb: "Kill criteria unconfirmed", href: "/quarantine", comingSoon: true },
-  { mark: "SC", name: "Supercomputer", blurb: "Plan-builder, roadmap gen", href: "/supercomputer" },
+/**
+ * Two groups instead of one flat list. Both are places you can land on
+ * directly from a cold start — that's the dividing line, not topic:
+ *
+ *   Signal   — Observatory and Vivarium, the two places you go to watch the
+ *              register as it stands right now.
+ *   Protocol — Quarantine and Supercomputer, the two places you go to *do*
+ *              something to it: clear a record to launch, or generate one.
+ *
+ * Laboratory and Microscope are deliberately not listed here at all — see
+ * DEFINITIONS.md. Both only resolve to a real destination once a record is
+ * already in view, and a sidebar entry that's disabled until you've already
+ * gone somewhere else isn't navigation, it's decoration. They're reachable
+ * from any card, and cross-link to each other once you're inside one.
+ */
+const GROUPS: { label: string; sections: Section[] }[] = [
+  {
+    label: "Signal",
+    sections: [
+      { icon: ObservatoryIcon, name: "Observatory", href: "/observatory" },
+      { icon: VivariumIcon, name: "Vivarium", href: "/vivarium" },
+    ],
+  },
+  {
+    label: "Protocol",
+    sections: [
+      { icon: QuarantineIcon, name: "Quarantine", href: "/quarantine", comingSoon: true },
+      { icon: SupercomputerIcon, name: "Supercomputer", href: "/supercomputer" },
+    ],
+  },
 ];
-
-/** Pulls the record id out of the path when we're already inside a
- *  Laboratory or Microscope view, so those two sections can jump straight to
- *  the same record instead of losing context. */
-function currentRecordId(pathname: string): string | null {
-  const match = pathname.match(/^\/(laboratory|microscope)\/([^/]+)/);
-  return match ? match[2] : null;
-}
 
 export function SidebarNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const recordId = currentRecordId(pathname);
 
   // Close the mobile drawer on navigation. Adjusted during render (React's
   // documented pattern for state derived from a changing prop) rather than in
@@ -72,7 +89,8 @@ export function SidebarNav() {
         ].join(" ")}
       >
         <div className="px-5 pt-6 pb-5">
-          <Link href="/observatory" className="flex items-baseline gap-2.5">
+          <Link href="/observatory" className="flex items-center gap-2">
+            <LabMark className="size-[19px] shrink-0 text-ink" />
             <span
               className="text-[16px] leading-none font-semibold tracking-[0.01em] text-ink"
               style={{ fontStretch: "118%" }}
@@ -80,17 +98,25 @@ export function SidebarNav() {
               Marketers Lab
             </span>
           </Link>
-          <p className="field-label mt-2">
+          <p className="mt-2 font-mono text-[10px] font-medium tracking-[0.14em] text-ink-4 uppercase">
+            Growth science
+          </p>
+          <p className="field-label mt-3">
             {BRANDS.length} brands · {EXPERIMENTS.length} records
           </p>
         </div>
 
-        <nav aria-label="Sections" className="flex-1 overflow-y-auto border-t border-rule px-2.5 py-3">
-          <ul className="space-y-0.5">
-            {SECTIONS.map((s) => (
-              <SectionLink key={s.name} section={s} pathname={pathname} recordId={recordId} />
-            ))}
-          </ul>
+        <nav aria-label="Sections" className="flex-1 overflow-y-auto border-t border-rule px-3 py-4">
+          {GROUPS.map((group, i) => (
+            <div key={group.label} className={i === 0 ? "" : "mt-5"}>
+              <p className="field-label px-2.5">{group.label}</p>
+              <ul className="mt-2 space-y-0.5">
+                {group.sections.map((s) => (
+                  <SectionLink key={s.name} section={s} pathname={pathname} />
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         <div className="border-t border-rule px-4 py-4">
@@ -114,66 +140,47 @@ function MobileTopBar({ onOpen }: { onOpen: () => void }) {
           ≡
         </span>
       </button>
-      <Link
-        href="/observatory"
-        className="text-[15px] leading-none font-semibold tracking-[0.01em] text-ink"
-        style={{ fontStretch: "118%" }}
-      >
-        Marketers Lab
+      <Link href="/observatory" className="flex items-center gap-2">
+        <LabMark className="size-[16px] shrink-0 text-ink" />
+        <span
+          className="text-[15px] leading-none font-semibold tracking-[0.01em] text-ink"
+          style={{ fontStretch: "118%" }}
+        >
+          Marketers Lab
+        </span>
       </Link>
     </div>
   );
 }
 
-function SectionLink({
-  section,
-  pathname,
-  recordId,
-}: {
-  section: Section;
-  pathname: string;
-  recordId: string | null;
-}) {
+function SectionLink({ section, pathname }: { section: Section; pathname: string }) {
   const isActive = pathname.startsWith(section.href);
-  const resolvedHref = section.needsRecord && recordId ? `${section.href}/${recordId}` : section.href;
-  const disabled = section.comingSoon || (section.needsRecord && !recordId);
+  const Icon = section.icon;
 
   const inner = (
     <>
+      <Icon className={`size-[16px] shrink-0 ${isActive ? "text-ink" : section.comingSoon ? "text-ink-4" : "text-ink-3"}`} />
       <span
-        className={[
-          "inline-flex size-[22px] shrink-0 items-center justify-center rounded-[3px] border font-mono text-[9.5px] leading-none font-semibold tracking-[0.02em]",
-          isActive
-            ? "border-ink bg-ink text-paper"
-            : disabled
-              ? "border-rule text-ink-4"
-              : "border-rule-2 bg-sunk text-ink-2",
-        ].join(" ")}
+        className={`min-w-0 flex-1 truncate text-[13px] leading-tight font-medium ${
+          isActive ? "text-ink" : section.comingSoon ? "text-ink-4" : "text-ink-2"
+        }`}
       >
-        {section.mark}
+        {section.name}
       </span>
-      <span className="min-w-0 flex-1">
-        <span
-          className={[
-            "block text-[13px] leading-tight font-medium",
-            isActive ? "text-ink" : disabled ? "text-ink-4" : "text-ink-2",
-          ].join(" ")}
-        >
-          {section.name}
+      {section.comingSoon && (
+        <span className="shrink-0 font-mono text-[9.5px] font-medium tracking-[0.12em] text-ink-4 uppercase">
+          Soon
         </span>
-        <span className="block truncate text-[10.5px] leading-tight text-ink-4">
-          {section.comingSoon ? "Coming soon" : section.needsRecord && !recordId ? "Open a record first" : section.blurb}
-        </span>
-      </span>
+      )}
     </>
   );
 
-  const rowClass = "flex items-center gap-2.5 rounded-[5px] px-2.5 py-2 transition-colors";
+  const rowClass = "flex items-center gap-2.5 rounded-[5px] px-2.5 py-[7px] transition-colors";
 
-  if (disabled) {
+  if (section.comingSoon) {
     return (
       <li>
-        <div aria-disabled className={`${rowClass} cursor-not-allowed opacity-70`} title={section.comingSoon ? "Not built yet" : "Open a record from Observatory or Vivarium first"}>
+        <div aria-disabled className={`${rowClass} cursor-not-allowed opacity-70`} title="Not built yet">
           {inner}
         </div>
       </li>
@@ -183,7 +190,7 @@ function SectionLink({
   return (
     <li>
       <Link
-        href={resolvedHref}
+        href={section.href}
         aria-current={isActive ? "page" : undefined}
         className={`${rowClass} ${isActive ? "bg-surface" : "hover:bg-surface/60"}`}
       >

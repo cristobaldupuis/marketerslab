@@ -8,6 +8,13 @@ Section is an **organizational/UI layer only**. It does not add a fifth axis to 
 taxonomy in `lib/types.ts` — see "Things that look arbitrary but are not" in `AGENTS.md`
 and the four-axis ceiling in `DECISIONS.md`.
 
+**Not every section is a sidebar row.** The sidebar (`components/sidebar-nav.tsx`) lists
+the sections you can land on directly, grouped as *Signal* (Observatory, Vivarium — watch
+the register as it stands) and *Protocol* (Quarantine, Supercomputer — do something to it).
+Laboratory and Microscope are real sections with their own routes and definitions below,
+but they're reached from a record, not from the sidebar — see their entries for why. Full
+reasoning in "Observatory redesign: visual direction and nav regrouping" in `DECISIONS.md`.
+
 ---
 
 ## Observatory
@@ -17,7 +24,11 @@ view, low detail per object.
 
 **Function:** High-level monitoring. The landing page. Every experiment as a card, filterable
 by the four taxonomy axes, ordered by recent activity. Answers "what's in the register and
-what state is it in," not "why did any one of these happen."
+what state is it in," not "why did any one of these happen." A second view, the pipeline
+priority tree, answers a related but different question — "what should run next" — by
+grouping the active (not-yet-concluded) register by loop stage then risk category. It is
+not the segment/decision tree (that's Laboratory's); see `lib/priority.ts` and
+`components/priority-tree.tsx`.
 
 **Route:** `/observatory` (root `/` redirects here)
 
@@ -42,6 +53,11 @@ replications. Two tabs:
 
 **Status:** Built (merges the former `/experiments/[id]` deep-read and `/patterns/[id]`)
 
+**Not in the sidebar:** only resolves to a real destination once a record is already in
+view, so it isn't one of the sidebar's rows — see the note at the top of this file. Reached
+from a card, or from Microscope's "Open in Laboratory" prompt; its own header links back to
+Microscope on the same record.
+
 ---
 
 ## Microscope
@@ -56,6 +72,9 @@ anyone who wants the design and evidence behind it.
 **Route:** `/microscope/[id]`
 
 **Status:** Built (formerly the "simple" position of the rigor dial on `/experiments/[id]`)
+
+**Not in the sidebar:** same reasoning as Laboratory, above. Reached from any experiment
+card across Observatory and Vivarium.
 
 ---
 

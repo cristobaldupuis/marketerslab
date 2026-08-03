@@ -37,9 +37,12 @@ scientist would use at a different stage of running an experiment. Full definiti
 | **Quarantine** | Pre-register triage — an experiment held here until its kill criteria are confirmed | `/quarantine` (planned) | ⏳ Not started |
 | **Supercomputer** | AI/agentic tooling — plan-builder, roadmap generator | not yet routed | ⏳ Not started (deferred, Pass 3 in the original build plan) |
 
-A persistent left sidebar lists all six sections. Quarantine and Supercomputer appear
-disabled/"coming soon" until their passes land, so the full IA is visible even before it's
-fully built.
+A persistent left sidebar lists the four sections you can land on directly, grouped as
+**Signal** (Observatory, Vivarium) and **Protocol** (Quarantine, Supercomputer). Quarantine
+appears disabled/"coming soon" until its pass lands. Laboratory and Microscope are real,
+built sections but aren't sidebar rows — both only resolve to a destination once a record
+is already in view, so they're reached from a card or from each other, not from the
+sidebar; see the note at the top of `DEFINITIONS.md`.
 
 **Section is a UI/organizational layer, not a data axis.** The four-axis taxonomy
 (Touchpoint, Loop Stage, Risk category, Brand) described in `DECISIONS.md` is locked and
@@ -52,8 +55,18 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
   axes, with a pre-registered `design` (power, MDE, sample) and `kill_criteria`.
 - **Seeded dataset** — 3 brands, 20 experiments in `lib/data/`. Every touchpoint, loop stage,
   risk category and brand has several examples; statuses and verdicts are varied.
-- **Observatory (`/observatory`)** — the landing view. Card grid, filterable by all four axes
-  with lightweight chips. Filters survive a trip into a record and back.
+- **Observatory (`/observatory`)** — the landing view. A masthead (last-synced timestamp,
+  read off the register; a link into Supercomputer's plan-builder to brief a new
+  experiment) and a stat-tile strip sit above two views, toggled with a segmented control:
+  - **Cards** — the grid, filterable by all four axes with lightweight chips. Filters
+    survive a trip into a record and back. Each card carries a timeline note ("Launched
+    …" / "Briefed …", off real dates) and an owner mark.
+  - **Priority tree** — every not-yet-concluded record grouped by loop stage then risk
+    category, so a thin or lopsided patch of the pipeline reads as a visible prompt
+    ("Analyze is empty," "Launch is all franchise") instead of something you have to
+    notice yourself. Answers "what should run next," not "why did this happen" — see
+    `lib/priority.ts` and `components/priority-tree.tsx`, and the segment-tree
+    distinction called out in `DECISIONS.md`.
 - **Microscope (`/microscope/[id]`)** — the quick, close-in read of a single record:
   hypothesis, result, verdict. Links out to the Laboratory for anyone who wants the full
   design and evidence behind it.

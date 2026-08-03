@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { BRAND_BY_ID } from "@/lib/data/brands";
+import { formatDate } from "@/lib/format";
 import { RIGOR_BY } from "@/lib/taxonomy";
 import type { Experiment } from "@/lib/types";
-import { BrandMark, LoopMeter, RiskChip, StatusMark, TouchpointChip, VerdictText } from "./marks";
+import { BrandMark, LoopMeter, OwnerMark, RiskChip, StatusMark, TouchpointChip, VerdictText } from "./marks";
+
+/** Launched records report against launch; anything still short of that
+ *  reports against when it was briefed — real fields either way, never a
+ *  live clock (see AGENTS.md on date formatting and hydration). */
+function timelineNote(e: Experiment): string {
+  return e.launched_at ? `Launched ${formatDate(e.launched_at)}` : `Briefed ${formatDate(e.created_at)}`;
+}
 
 /** Loonshot rails are drawn as a dashed stripe, matching the chip treatment. */
 function railStyle(risk: Experiment["risk_category"]): React.CSSProperties {
@@ -70,6 +78,14 @@ export function ExperimentCard({ experiment: e }: { experiment: Experiment }) {
               : e.summary}
           </span>
         )}
+
+        <div className="mt-2 flex items-center justify-between gap-2 border-t border-rule/70 pt-2">
+          <span className="font-mono text-[10.5px] leading-none text-ink-3">{timelineNote(e)}</span>
+          <span className="flex items-center gap-1.5">
+            <OwnerMark name={e.owner} />
+            <span className="font-mono text-[10.5px] leading-none text-ink-3">{e.owner.split(" ")[0]}</span>
+          </span>
+        </div>
       </div>
     </Link>
   );

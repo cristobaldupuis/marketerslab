@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BRANDS } from "@/lib/data/brands";
 import { EXPERIMENTS } from "@/lib/data/experiments";
+import { formatDate } from "@/lib/format";
+import { FAMILIES } from "@/lib/patterns";
 import { LOOP_STAGES, RISK_CATEGORIES, TOUCHPOINTS } from "@/lib/taxonomy";
 import type { Experiment, LoopStage, RiskCategory, Touchpoint } from "@/lib/types";
 import { ExperimentCard } from "./experiment-card";
-import { StatusGlyph } from "./marks";
+import { PriorityTree } from "./priority-tree";
+import { SegmentedControl } from "./segmented-control";
 
 type Filters = {
   touchpoint: Touchpoint[];
@@ -48,8 +52,11 @@ function matches(e: Experiment, f: Filters): boolean {
  * taxonomy axes, ordered by recent activity. Formerly the unnamed landing
  * ("register") view; see DEFINITIONS.md.
  */
+type View = "cards" | "tree";
+
 export function ObservatoryView() {
   const [filters, setFiltersState] = useState<Filters>(readLastFilters);
+  const [view, setView] = useState<View>("cards");
 
   const results = useMemo(() => ORDERED.filter((e) => matches(e, filters)), [filters]);
   const activeCount = Object.values(filters).reduce((n, arr) => n + arr.length, 0);
@@ -72,156 +79,198 @@ export function ObservatoryView() {
       <Thesis />
 
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
-        <section aria-label="Filters" className="rounded-[6px] border border-rule bg-surface">
-          <AxisRow label="Touchpoint" first>
-            {TOUCHPOINTS.map((t) => (
-              <FilterChip
-                key={t.value}
-                active={filters.touchpoint.includes(t.value)}
-                onClick={() => toggle("touchpoint", t.value)}
-                title={t.blurb}
-              >
-                {t.label}
-              </FilterChip>
-            ))}
-          </AxisRow>
-
-          <AxisRow label="Loop stage">
-            {LOOP_STAGES.map((s) => (
-              <FilterChip
-                key={s.value}
-                active={filters.loop_stage.includes(s.value)}
-                onClick={() => toggle("loop_stage", s.value)}
-                title={s.blurb}
-              >
-                {s.label}
-              </FilterChip>
-            ))}
-          </AxisRow>
-
-          <AxisRow label="Risk">
-            {RISK_CATEGORIES.map((r) => (
-              <FilterChip
-                key={r.value}
-                active={filters.risk_category.includes(r.value)}
-                onClick={() => toggle("risk_category", r.value)}
-                tone={r.value}
-                title={r.blurb}
-              >
-                {r.label}
-              </FilterChip>
-            ))}
-          </AxisRow>
-
-          <AxisRow label="Brand">
-            {BRANDS.map((b) => (
-              <FilterChip
-                key={b.id}
-                active={filters.brand_id.includes(b.id)}
-                onClick={() => toggle("brand_id", b.id)}
-                title={b.description}
-              >
-                {b.name}
-              </FilterChip>
-            ))}
-          </AxisRow>
-
-          <div className="flex items-center gap-3 border-t border-rule px-4 py-2.5">
-            <span className="font-mono text-[11px] text-ink-3">
-              {results.length === ORDERED.length
+        <div className="flex items-center gap-3 border-b border-rule pb-5">
+          <span className="field-label">View</span>
+          <SegmentedControl
+            value={view}
+            onChange={setView}
+            label="Observatory view"
+            options={[
+              { value: "cards", label: "Cards" },
+              { value: "tree", label: "Priority tree" },
+            ]}
+          />
+          <span className="ml-auto hidden font-mono text-[11px] text-ink-3 sm:inline">
+            {view === "cards"
+              ? results.length === ORDERED.length
                 ? `${ORDERED.length} records`
-                : `${results.length} of ${ORDERED.length} records`}
-            </span>
-            {activeCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setFilters(EMPTY)}
-                className="ml-auto font-mono text-[11px] text-ink-2 underline decoration-rule-2 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
-              >
-                Clear {activeCount} filter{activeCount === 1 ? "" : "s"}
-              </button>
-            )}
-          </div>
-        </section>
+                : `${results.length} of ${ORDERED.length} records`
+              : "What to run next, by loop stage"}
+          </span>
+        </div>
 
-        {results.length === 0 ? (
-          <div className="mt-8 rounded-[6px] border border-dashed border-rule-2 px-6 py-16 text-center">
-            <p className="text-[15px] text-ink">Nothing in the register matches that combination.</p>
-            <p className="mx-auto mt-1.5 max-w-md text-[13px] text-ink-2">
-              Widen an axis, or clear the filters to see all {ORDERED.length} records.
-            </p>
-            <button
-              type="button"
-              onClick={() => setFilters(EMPTY)}
-              className="mt-5 rounded-[4px] bg-ink px-3.5 py-2 font-mono text-[11px] tracking-[0.08em] text-paper uppercase transition-opacity hover:opacity-85"
-            >
-              Clear filters
-            </button>
+        {view === "tree" ? (
+          <div className="pt-8">
+            <PriorityTree />
           </div>
         ) : (
-          <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {results.map((e) => (
-              <li key={e.id} className="flex">
-                <div className="flex w-full">
-                  <ExperimentCard experiment={e} />
-                </div>
-              </li>
-            ))}
-          </ul>
+          <>
+            <section aria-label="Filters" className="mt-6 rounded-[6px] border border-rule bg-surface">
+              <AxisRow label="Touchpoint" first>
+                {TOUCHPOINTS.map((t) => (
+                  <FilterChip
+                    key={t.value}
+                    active={filters.touchpoint.includes(t.value)}
+                    onClick={() => toggle("touchpoint", t.value)}
+                    title={t.blurb}
+                  >
+                    {t.label}
+                  </FilterChip>
+                ))}
+              </AxisRow>
+
+              <AxisRow label="Loop stage">
+                {LOOP_STAGES.map((s) => (
+                  <FilterChip
+                    key={s.value}
+                    active={filters.loop_stage.includes(s.value)}
+                    onClick={() => toggle("loop_stage", s.value)}
+                    title={s.blurb}
+                  >
+                    {s.label}
+                  </FilterChip>
+                ))}
+              </AxisRow>
+
+              <AxisRow label="Risk">
+                {RISK_CATEGORIES.map((r) => (
+                  <FilterChip
+                    key={r.value}
+                    active={filters.risk_category.includes(r.value)}
+                    onClick={() => toggle("risk_category", r.value)}
+                    tone={r.value}
+                    title={r.blurb}
+                  >
+                    {r.label}
+                  </FilterChip>
+                ))}
+              </AxisRow>
+
+              <AxisRow label="Brand">
+                {BRANDS.map((b) => (
+                  <FilterChip
+                    key={b.id}
+                    active={filters.brand_id.includes(b.id)}
+                    onClick={() => toggle("brand_id", b.id)}
+                    title={b.description}
+                  >
+                    {b.name}
+                  </FilterChip>
+                ))}
+              </AxisRow>
+
+              <div className="flex items-center gap-3 border-t border-rule px-4 py-2.5">
+                <span className="font-mono text-[11px] text-ink-3 sm:hidden">
+                  {results.length === ORDERED.length
+                    ? `${ORDERED.length} records`
+                    : `${results.length} of ${ORDERED.length} records`}
+                </span>
+                {activeCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters(EMPTY)}
+                    className="ml-auto font-mono text-[11px] text-ink-2 underline decoration-rule-2 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
+                  >
+                    Clear {activeCount} filter{activeCount === 1 ? "" : "s"}
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {results.length === 0 ? (
+              <div className="mt-8 rounded-[6px] border border-dashed border-rule-2 px-6 py-16 text-center">
+                <p className="text-[15px] text-ink">Nothing in the register matches that combination.</p>
+                <p className="mx-auto mt-1.5 max-w-md text-[13px] text-ink-2">
+                  Widen an axis, or clear the filters to see all {ORDERED.length} records.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFilters(EMPTY)}
+                  className="mt-5 rounded-[4px] bg-ink px-3.5 py-2 font-mono text-[11px] tracking-[0.08em] text-paper uppercase transition-opacity hover:opacity-85"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {results.map((e) => (
+                  <li key={e.id} className="flex">
+                    <div className="flex w-full">
+                      <ExperimentCard experiment={e} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
     </>
   );
 }
 
-/** Register summary. A readout, not a KPI row — these are counts of records in
- *  each state, which is the one thing worth knowing before you start reading. */
+/** Last touch across the whole register — real data, not a fabricated sync
+ *  clock. `updated_at` is already maintained on every record. */
+function lastSyncedAt(): string {
+  return EXPERIMENTS.reduce((max, e) => (e.updated_at > max ? e.updated_at : max), EXPERIMENTS[0].updated_at);
+}
+
 function Thesis() {
-  const counts = {
-    planned: EXPERIMENTS.filter((e) => e.status === "planned").length,
+  const stats = {
     running: EXPERIMENTS.filter((e) => e.status === "running").length,
-    complete: EXPERIMENTS.filter((e) => e.status === "complete").length,
+    planned: EXPERIMENTS.filter((e) => e.status === "planned").length,
+    won: EXPERIMENTS.filter((e) => e.outcome === "won").length,
     killed: EXPERIMENTS.filter((e) => e.status === "killed").length,
+    loonshotsLive: EXPERIMENTS.filter((e) => e.status === "running" && e.risk_category === "loonshot").length,
+    patterns: FAMILIES.length,
   };
 
   return (
-    <section className="mx-auto max-w-[1240px] px-5 pt-12 pb-9 sm:px-8 sm:pt-16">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-16">
-        <div className="max-w-[42ch]">
+    <section className="mx-auto max-w-[1240px] px-5 pt-10 pb-9 sm:px-8 sm:pt-12">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+        <div>
           <p className="field-label">Observatory</p>
-          <h1
-            className="mt-3 text-[34px] leading-[1.08] font-semibold tracking-[-0.015em] text-balance text-ink sm:text-[42px]"
-            style={{ fontStretch: "112%" }}
-          >
-            Rigor, scaled to the stakes.
-          </h1>
-          <p className="mt-4 max-w-[52ch] text-[14.5px] leading-[1.6] text-ink-2">
-            Every experiment here carries the same record — a hypothesis, a design, and kill criteria
-            registered before launch. How deep you read it is your call, not the system&rsquo;s.
+          <p className="mt-1.5 font-mono text-[11px] leading-none text-ink-3">
+            Last synced {formatDate(lastSyncedAt())}
           </p>
         </div>
-
-        {/* One mark per record, grouped by state — the register counting itself,
-            rather than a row of headline numbers. */}
-        <div className="shrink-0">
-          <p className="field-label mb-2">Register state</p>
-          <dl className="flex flex-wrap gap-x-8 gap-y-4 border-t border-ink pt-3.5 sm:gap-x-11">
-            {(["planned", "running", "complete", "killed"] as const).map((s) => (
-              <div key={s} className="flex flex-col gap-3">
-                <dd className="flex h-[9px] items-center gap-[6px]" aria-hidden>
-                  {Array.from({ length: counts[s] }, (_, i) => (
-                    <StatusGlyph key={i} value={s} animate={false} />
-                  ))}
-                </dd>
-                <dt className="font-mono text-[11px] leading-none tracking-[0.09em] text-ink-3 uppercase">
-                  <span className="text-[14px] font-semibold text-ink">{counts[s]}</span> {s}
-                </dt>
-              </div>
-            ))}
-          </dl>
-        </div>
+        <Link
+          href="/supercomputer"
+          className="shrink-0 rounded-[4px] bg-ink px-3.5 py-2 font-mono text-[11px] leading-none tracking-[0.08em] text-paper uppercase transition-opacity hover:opacity-85"
+        >
+          + Brief new experiment
+        </Link>
       </div>
+
+      <h1
+        className="mt-5 max-w-[42ch] text-[34px] leading-[1.08] font-semibold tracking-[-0.015em] text-balance text-ink sm:text-[42px]"
+        style={{ fontStretch: "112%" }}
+      >
+        Rigor, scaled to the stakes.
+      </h1>
+      <p className="mt-4 max-w-[52ch] text-[14.5px] leading-[1.6] text-ink-2">
+        Every experiment here carries the same record — a hypothesis, a design, and kill criteria
+        registered before launch. How deep you read it is your call, not the system&rsquo;s.
+      </p>
+
+      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-[6px] border border-rule bg-rule sm:grid-cols-3 lg:grid-cols-6">
+        <StatTile label="Running now" value={stats.running} tone="text-live" />
+        <StatTile label="Planned" value={stats.planned} tone="text-ink-3" />
+        <StatTile label="Won" value={stats.won} tone="text-won" />
+        <StatTile label="Killed" value={stats.killed} tone="text-stopped" />
+        <StatTile label="Loonshots live" value={stats.loonshotsLive} tone="text-loonshot" />
+        <StatTile label="Cross-brand patterns" value={stats.patterns} tone="text-ink" />
+      </dl>
     </section>
+  );
+}
+
+function StatTile({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="bg-surface px-4 py-3.5">
+      <dt className="field-label truncate">{label}</dt>
+      <dd className={`mt-1.5 font-mono text-[22px] leading-none font-semibold ${tone}`}>{value}</dd>
+    </div>
   );
 }
 
