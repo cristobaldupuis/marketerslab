@@ -19,7 +19,7 @@ export function ExperimentCard({ experiment: e }: { experiment: Experiment }) {
 
   return (
     <Link
-      href={`/experiments/${e.id}`}
+      href={`/microscope/${e.id}`}
       className="group relative flex flex-col overflow-hidden rounded-[5px] border border-rule bg-surface transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:border-rule-2 hover:shadow-[0_8px_24px_-14px_rgba(18,23,30,0.4)] focus-visible:-translate-y-px"
     >
       <span aria-hidden className="absolute inset-y-0 left-0 w-[3px]" style={railStyle(e.risk_category)} />

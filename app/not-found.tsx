@@ -12,10 +12,10 @@ export default function NotFound() {
         Head back to the register to find the one you were after.
       </p>
       <Link
-        href="/"
+        href="/observatory"
         className="mt-6 inline-block rounded-[4px] bg-ink px-3.5 py-2 font-mono text-[11px] tracking-[0.08em] text-paper uppercase transition-opacity hover:opacity-85"
       >
-        Open the register
+        Open the Observatory
       </Link>
     </div>
   );

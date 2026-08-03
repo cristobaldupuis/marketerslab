@@ -1,5 +1,5 @@
-import { RegisterView } from "@/components/register-view";
+import { redirect } from "next/navigation";
 
-export default function RegisterPage() {
-  return <RegisterView />;
+export default function RootPage() {
+  redirect("/observatory");
 }

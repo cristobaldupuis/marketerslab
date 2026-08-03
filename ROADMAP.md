@@ -11,7 +11,7 @@ behind. Do not start a pass out of sequence without updating this file to say wh
 
 ## Pass A — Navigation + IA
 
-**Status:** In progress
+**Status:** Done
 **Scope:** Medium–large
 **Depends on:** Nothing (first pass)
 
@@ -43,6 +43,31 @@ behind. Do not start a pass out of sequence without updating this file to say wh
 **Watch:** Hardcoded `href`s throughout components (`components/experiment-card.tsx`,
 `components/experiment-detail.tsx`, `components/pattern-view.tsx`, `app/layout.tsx`) all
 need updating in the same pass — don't ship a partial rename that leaves dead links.
+
+**Decisions made while building this pass** (the original scoping note left these open;
+recorded here so they're easy to revisit rather than archaeology later):
+
+- **Microscope got its own route**, `/microscope/[id]`, in this pass rather than being
+  deferred. The alternative (leaving simple-read at the old `/experiments/[id]` path) would
+  have left Laboratory and Microscope inconsistently named for no real savings, and the
+  sidebar needed a real destination for Microscope anyway once it's context-aware (see
+  below).
+- **Old routes redirect**, they don't 404. `/experiments/[id]` → `/microscope/[id]`;
+  `/patterns/[id]` → `/laboratory/[id]?tab=patterns`.
+- **Dark mode is a manual light/dark/system toggle**, not system-only. Sidebar footer,
+  persisted in `localStorage`, using `useSyncExternalStore` rather than an effect (React
+  Compiler's `react-hooks/set-state-in-effect` rule rejects the naive
+  `useEffect`-plus-`setState` sync pattern — see `components/theme-toggle.tsx`).
+- **Quarantine and Supercomputer show in the sidebar now, disabled**, labeled "Coming
+  soon," so the six-section IA reads as a whole before Pass C/D exist.
+- **Sidebar's Laboratory/Microscope links are context-aware**: disabled ("Open a record
+  first") until you're already viewing one of the two, at which point both links jump to
+  the *same record* in the other section — lets you flip Microscope ↔ Laboratory while
+  reading rather than dead-ending back at Observatory.
+- **Laboratory's Patterns tab lives on every family member's URL**, not just the anchor's.
+  `familyOf(id)` is computed per-record, so viewing a sibling experiment's Laboratory page
+  and switching to Patterns shows the same pooled family data — no forced navigation to
+  the anchor record just to see the cross-brand read.
 
 ---
 

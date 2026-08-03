@@ -1,193 +1,118 @@
 "use client";
 
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { BRAND_BY_ID } from "@/lib/data/brands";
-import { daysBetween, formatCount, formatDate, formatPercent } from "@/lib/format";
-import { familyOf } from "@/lib/patterns";
+import { daysBetween, formatCount, formatDate, formatEffect, formatPercent } from "@/lib/format";
+import { CONSISTENCY_COPY, type ExperimentFamily, type PatternStudy } from "@/lib/patterns";
+import { effectTone } from "@/lib/segments";
 import { RIGOR_BY, RISK_BY } from "@/lib/taxonomy";
 import type { Experiment } from "@/lib/types";
-import { BrandMark, LoopMeter, RiskChip, StatusMark, TouchpointChip, VerdictText } from "./marks";
-import { RigorDial, type ReadDepth } from "./rigor-dial";
-import { SegmentTree } from "./segment-tree";
+import { TONE } from "./effect-tone";
+import { BrandMark, RiskChip, StatusMark } from "./marks";
+import { RecordHeader } from "./record-header";
+import { SegmentedControl } from "./segmented-control";
+import { Forest, SegmentTree } from "./segment-tree";
 
-export function ExperimentDetail({ experiment: e }: { experiment: Experiment }) {
-  // Deep records open deep. The dial is still the reader's to move — this is
-  // just a sensible starting position, not a lock.
-  const [depth, setDepth] = useState<ReadDepth>(e.rigor_tier === "deep" ? "deep" : "simple");
-  const brand = BRAND_BY_ID[e.brand_id];
+type Tab = "experiment" | "patterns";
 
-  return (
-    // Same outer shell as the register so the left edge lines up with the
-    // masthead; the reading column is constrained inside it.
-    <div className="mx-auto max-w-[1240px] px-5 pb-4 sm:px-8">
-      <article className="max-w-[1000px]">
-      <nav className="pt-6 pb-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.08em] text-ink-3 uppercase transition-colors hover:text-ink"
-        >
-          <span aria-hidden>←</span> Register
-        </Link>
-      </nav>
+/**
+ * Laboratory — the analysis workspace. Merges what used to be the "deep"
+ * position of the rigor dial (design of record, kill criteria, segment tree)
+ * with the former standalone cross-brand pattern view, as two tabs on one
+ * record rather than two disconnected pages. See DEFINITIONS.md.
+ */
+export function LaboratoryView({
+  experiment: e,
+  family,
+  initialTab,
+}: {
+  experiment: Experiment;
+  family: ExperimentFamily | null;
+  initialTab: Tab;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const hasPatterns = Boolean(family?.pooled && family.studies.length >= 2);
+  const [tab, setTab] = useState<Tab>(initialTab === "patterns" && !hasPatterns ? "experiment" : initialTab);
 
-      <header>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="font-mono text-[12px] font-medium tracking-[0.04em] text-ink-3">{e.id}</span>
-          <span aria-hidden className="h-3 w-px bg-rule-2" />
-          <BrandMark initials={brand.initials} />
-          <span className="text-[13px] text-ink-2">{brand.name}</span>
-          <span className="ml-auto">
-            <StatusMark value={e.status} />
-          </span>
-        </div>
-
-        <h1
-          className="mt-4 max-w-[24ch] text-[30px] leading-[1.14] font-semibold tracking-[-0.012em] text-balance text-ink sm:text-[38px]"
-          style={{ fontStretch: "110%" }}
-        >
-          {e.title}
-        </h1>
-
-        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <TouchpointChip value={e.touchpoint} />
-          <RiskChip value={e.risk_category} size="md" />
-          <span aria-hidden className="h-3 w-px bg-rule-2" />
-          <LoopMeter value={e.loop_stage} />
-          <span aria-hidden className="h-3 w-px bg-rule-2" />
-          <span className="font-mono text-[10px] leading-none tracking-[0.1em] text-ink-3 uppercase">
-            {RIGOR_BY[e.rigor_tier].label} tier
-          </span>
-        </div>
-      </header>
-
-      <div className="mt-8 border-y border-rule-2 bg-paper-deep/45 px-4 py-4 sm:px-5">
-        <RigorDial value={depth} onChange={setDepth} risk={e.risk_category} tier={e.rigor_tier} />
-      </div>
-
-      {/* The simple read never moves. Deep is additive — flipping the dial
-          unfolds evidence below what you were already reading, so nothing you
-          had your eye on jumps. */}
-      <SimpleRead experiment={e} />
-
-      {depth === "deep" ? (
-        <DeepRead key={e.id} experiment={e} />
-      ) : (
-        <DeepReadHint onOpen={() => setDepth("deep")} />
-      )}
-      </article>
-    </div>
-  );
-}
-
-/** Simple is the default read, so it has to say what it is leaving out —
- *  otherwise the rigor is invisible to anyone who never touches the dial. */
-function DeepReadHint({ onOpen }: { onOpen: () => void }) {
-  return (
-    <div className="mt-12 flex flex-col gap-4 rounded-[6px] border border-dashed border-rule-2 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
-      <div className="min-w-0 flex-1">
-        <p className="field-label">Also on this record</p>
-        <p className="mt-2 text-[13.5px] leading-snug text-ink-2">
-          Design of record · Segment analysis · Kill criteria as registered · Risk posture
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="shrink-0 self-start rounded-[4px] border border-ink px-3 py-2 font-mono text-[11px] leading-none tracking-[0.08em] text-ink uppercase transition-colors hover:bg-ink hover:text-paper sm:self-auto"
-      >
-        Open deep read
-      </button>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Simple read                                                                 */
-/* -------------------------------------------------------------------------- */
-
-function SimpleRead({ experiment: e }: { experiment: Experiment }) {
-  return (
-    <section className="mt-9">
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_300px] md:gap-9">
-        <div className="order-2 md:order-1">
-          <h2 className="field-label">Hypothesis</h2>
-          <p className="mt-2.5 max-w-[62ch] text-[15.5px] leading-[1.62] text-pretty text-ink">
-            {e.hypothesis}
-          </p>
-
-          <h2 className="field-label mt-7">The read</h2>
-          <p className="mt-2.5 max-w-[62ch] text-[14.5px] leading-[1.62] text-ink-2">{e.summary}</p>
-        </div>
-
-        <div className="order-1 md:order-2">
-          <ResultPanel experiment={e} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ResultPanel({ experiment: e }: { experiment: Experiment }) {
-  if (!e.headline) {
-    return (
-      <div className="rounded-[6px] border border-dashed border-rule-2 bg-surface/60 p-4">
-        <p className="field-label">Result</p>
-        <p className="mt-3 text-[15px] leading-snug text-ink-2">Not launched yet.</p>
-        <dl className="mt-4 space-y-2 border-t border-rule pt-3 font-mono text-[11px] text-ink-3">
-          <div className="flex justify-between gap-3">
-            <dt>Planned runtime</dt>
-            <dd className="text-ink-2">{e.design.planned_runtime_days} days</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt>Sample target</dt>
-            <dd className="text-ink-2">
-              {e.design.sample_per_arm ? `${formatCount(e.design.sample_per_arm)} / arm` : "Set at brief"}
-            </dd>
-          </div>
-        </dl>
-      </div>
-    );
+  function changeTab(next: Tab) {
+    setTab(next);
+    router.replace(next === "patterns" ? `${pathname}?tab=patterns` : pathname, { scroll: false });
   }
 
-  const isOpen = e.status === "running";
-
   return (
-    <div className="rounded-[6px] border border-rule bg-surface p-4">
-      <p className="field-label">{e.headline.label}</p>
-      <p
-        className="mt-2.5 text-[44px] leading-none font-semibold tracking-[-0.02em]"
-        style={{ fontStretch: "106%" }}
-      >
-        <VerdictText outcome={isOpen ? null : e.outcome}>{e.headline.value}</VerdictText>
-      </p>
-      <p className="mt-2.5 font-mono text-[11px] leading-[1.5] text-ink-3">{e.headline.interval}</p>
+    <div className="mx-auto max-w-[1240px] px-5 pb-4 sm:px-8">
+      <div className="max-w-[1000px]">
+        <RecordHeader
+          experiment={e}
+          backHref={`/microscope/${e.id}`}
+          backLabel="Microscope"
+          eyebrow="Laboratory"
+        >
+          <div className="mt-8 border-y border-rule-2 bg-paper-deep/45 px-4 py-4 sm:px-5">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <div className="flex items-center gap-3">
+                <span className="field-label">View</span>
+                <SegmentedControl
+                  value={tab}
+                  onChange={changeTab}
+                  label="Laboratory view"
+                  options={[
+                    { value: "experiment", label: "Experiment" },
+                    {
+                      value: "patterns",
+                      label: "Patterns",
+                      disabled: !hasPatterns,
+                      hint: hasPatterns ? undefined : "No cross-brand replication for this record",
+                    },
+                  ]}
+                />
+              </div>
+              {tab === "patterns" && family?.pooled && (
+                <p className="font-mono text-[11px] leading-[1.5] text-ink-3">
+                  {family.studies.length} brands ·{" "}
+                  <span className="text-ink-2">{formatPercent(family.pooled.i2)} I²</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </RecordHeader>
+      </div>
 
-      {e.verdict && (
-        <p className="mt-4 border-t border-rule pt-3 text-[13.5px] leading-snug">
-          <VerdictText outcome={e.outcome} className="font-medium">
-            {e.verdict}
-          </VerdictText>
-        </p>
-      )}
+      {tab === "experiment" ? (
+        <div className="max-w-[1000px]">
+          <ExperimentTab experiment={e} family={family} onOpenPatterns={() => changeTab("patterns")} />
+        </div>
+      ) : family ? (
+        <PatternsTab experiment={e} family={family} />
+      ) : null}
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Deep read                                                                   */
+/* Experiment tab (formerly "deep read")                                      */
 /* -------------------------------------------------------------------------- */
 
-function DeepRead({ experiment: e }: { experiment: Experiment }) {
+function ExperimentTab({
+  experiment: e,
+  family,
+  onOpenPatterns,
+}: {
+  experiment: Experiment;
+  family: ExperimentFamily | null;
+  onOpenPatterns: () => void;
+}) {
   return (
-    <div className="mt-12">
+    <div className="mt-10">
       <Section eyebrow="01" title="Design of record" delay={0}>
         <DesignBlock experiment={e} />
       </Section>
 
       <Section eyebrow="02" title="Segment analysis" delay={80}>
         <TreeSlot experiment={e} />
-        <FamilyLink experiment={e} />
+        <FamilyPrompt experiment={e} family={family} onOpenPatterns={onOpenPatterns} />
       </Section>
 
       <Section eyebrow="03" title="Kill criteria" delay={160}>
@@ -201,8 +126,8 @@ function DeepRead({ experiment: e }: { experiment: Experiment }) {
   );
 }
 
-/** Numbered because the deep read genuinely is a sequence: what was planned,
- *  what the data said, what the rule was, and why the rule was set that way. */
+/** Numbered because the read genuinely is a sequence: what was planned, what
+ *  the data said, what the rule was, and why the rule was set that way. */
 function Section({
   eyebrow,
   title,
@@ -525,21 +450,23 @@ function RiskPostureBlock({ experiment: e }: { experiment: Experiment }) {
 function TreeSlot({ experiment: e }: { experiment: Experiment }) {
   if (!e.segment_tree) return <NoTreeData />;
 
-  return (
-    <SegmentTree
-      tree={e.segment_tree}
-      metricLabel={e.headline?.label ?? e.design.primary_metric}
-    />
-  );
+  return <SegmentTree tree={e.segment_tree} metricLabel={e.headline?.label ?? e.design.primary_metric} />;
 }
 
-/**
- * Sits under the tree because it is the question a reader has the moment they
- * have finished reading one: does this hold anywhere else? Only appears when
- * the same test genuinely ran at another brand.
- */
-function FamilyLink({ experiment: e }: { experiment: Experiment }) {
-  const family = familyOf(e.id);
+/** Sits under the tree because it is the question a reader has the moment they
+ *  have finished reading one: does this hold anywhere else? Switches the
+ *  Laboratory's own tab rather than navigating away, since Patterns now lives
+ *  on the same record rather than a separate page. Only appears when the same
+ *  test genuinely ran at another brand. */
+function FamilyPrompt({
+  experiment: e,
+  family,
+  onOpenPatterns,
+}: {
+  experiment: Experiment;
+  family: ExperimentFamily | null;
+  onOpenPatterns: () => void;
+}) {
   if (!family?.pooled || family.studies.length < 2) return null;
 
   const others = family.studies
@@ -547,9 +474,10 @@ function FamilyLink({ experiment: e }: { experiment: Experiment }) {
     .map((s) => BRAND_BY_ID[s.experiment.brand_id].name);
 
   return (
-    <Link
-      href={`/patterns/${family.anchorId}`}
-      className="group mt-4 flex flex-col gap-3 rounded-[6px] border border-rule bg-surface px-4 py-3.5 transition-colors hover:border-ink sm:flex-row sm:items-center sm:gap-5 sm:px-5"
+    <button
+      type="button"
+      onClick={onOpenPatterns}
+      className="group mt-4 flex w-full flex-col gap-3 rounded-[6px] border border-rule bg-surface px-4 py-3.5 text-left transition-colors hover:border-ink sm:flex-row sm:items-center sm:gap-5 sm:px-5"
     >
       <div className="min-w-0 flex-1">
         <p className="field-label">Also run at</p>
@@ -562,9 +490,9 @@ function FamilyLink({ experiment: e }: { experiment: Experiment }) {
         </p>
       </div>
       <span className="shrink-0 self-start rounded-[4px] border border-ink px-3 py-2 font-mono text-[11px] leading-none tracking-[0.08em] text-ink uppercase transition-colors group-hover:bg-ink group-hover:text-paper sm:self-auto">
-        Pattern view →
+        View patterns →
       </span>
-    </Link>
+    </button>
   );
 }
 
@@ -573,9 +501,7 @@ function NoTreeData() {
     <div className="relative overflow-hidden rounded-[6px] border border-dashed border-rule-2 bg-surface/50">
       <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
         <TreeSkeleton />
-        <p className="mt-6 font-mono text-[10px] tracking-[0.16em] text-ink-3 uppercase">
-          No tree data
-        </p>
+        <p className="mt-6 font-mono text-[10px] tracking-[0.16em] text-ink-3 uppercase">No tree data</p>
         <p className="mt-2.5 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-2">
           This experiment was not read at segment level. A tree is only worth building where the
           sample supports it and the decision turns on who moved, not just whether anything did —
@@ -615,5 +541,250 @@ function TreeSkeleton() {
         <rect x="246" y="76" width="36" height="12" rx="2" />
       </g>
     </svg>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Patterns tab (formerly the standalone /patterns/[id] view)                  */
+/* -------------------------------------------------------------------------- */
+
+function PatternsTab({ experiment: e, family }: { experiment: Experiment; family: ExperimentFamily }) {
+  const pooled = family.pooled;
+
+  return (
+    <div className="mt-10">
+      <p className="max-w-[62ch] text-[14.5px] leading-[1.62] text-pretty text-ink-2">
+        The same experiment, the same design, run at every brand in the instance. Brand is not a
+        tenant here — it is one more variable the tree can split on.{" "}
+        <span className="font-mono text-[12.5px] text-ink-3">
+          {family.studies.length} brands · {formatCount(family.totalN)} households · {rangeLabel(family)}
+        </span>
+      </p>
+
+      {pooled && (
+        <div className="deep-section mt-7 grid gap-px overflow-hidden rounded-[6px] border border-ink bg-rule md:grid-cols-2">
+          <div className="bg-surface px-4 py-4 sm:px-5">
+            <p className="field-label">Pooled effect</p>
+            <p
+              className={`mt-2.5 text-[40px] leading-none font-semibold tracking-[-0.02em] ${
+                TONE[effectTone(pooled)].text
+              }`}
+              style={{ fontStretch: "106%" }}
+            >
+              {formatEffect(pooled.effect)}
+            </p>
+            <p className="mt-2.5 font-mono text-[11px] leading-[1.6] text-ink-3">
+              95% CI {formatEffect(pooled.interval[0])} to {formatEffect(pooled.interval[1])}
+            </p>
+            <p className="mt-3.5 border-t border-rule pt-3 text-[13px] leading-[1.55] text-ink-2">
+              Inverse-variance weighted across {family.studies.length} runs, so a brand with a wide
+              interval cannot pull the estimate as hard as a brand with a tight one.
+            </p>
+          </div>
+
+          <div className="bg-surface px-4 py-4 sm:px-5">
+            <p className="field-label">Between-brand variation</p>
+            <div className="mt-2.5 flex items-baseline gap-3">
+              <span
+                className="text-[40px] leading-none font-semibold tracking-[-0.02em] text-ink"
+                style={{ fontStretch: "106%" }}
+              >
+                {formatPercent(pooled.i2)}
+              </span>
+              <span className="font-mono text-[11px] text-ink-3">
+                I² · Q = {pooled.q.toFixed(1)} on {pooled.df} df
+              </span>
+            </div>
+            <p className="mt-2.5 text-[15px] leading-snug font-medium text-ink">
+              {CONSISTENCY_COPY[pooled.consistency].label}
+            </p>
+            <p className="mt-3.5 border-t border-rule pt-3 text-[13px] leading-[1.55] text-ink-2">
+              {CONSISTENCY_COPY[pooled.consistency].blurb}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <Section eyebrow="01" title="The same test, every brand" delay={80}>
+        <StudyPlot family={family} currentId={e.id} />
+      </Section>
+
+      {family.tree && (
+        <Section eyebrow="02" title="Brand as a split variable" delay={160}>
+          <SegmentTree
+            tree={family.tree}
+            metricLabel={e.headline?.label ?? e.design.primary_metric}
+            toplineFraming="is pooled across the brands below, each weighted by how precisely it was measured"
+          />
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function rangeLabel(family: ExperimentFamily): string {
+  const starts = family.members.map((m) => m.launched_at).filter(Boolean) as string[];
+  const ends = family.members.map((m) => m.concluded_at).filter(Boolean) as string[];
+  if (!starts.length) return "not yet launched";
+  const from = starts.reduce((a, b) => (a < b ? a : b));
+  if (!ends.length) return `from ${formatDate(from)}`;
+  const to = ends.reduce((a, b) => (a > b ? a : b));
+  return `${formatDate(from)} – ${formatDate(to)}`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Forest plot                                                                 */
+/* -------------------------------------------------------------------------- */
+
+const VERDICT_WORD: Record<PatternStudy["verdict"], string> = {
+  holds: "Holds",
+  reverses: "Reverses",
+  unresolved: "Unresolved",
+};
+
+/**
+ * A literal forest plot: one row per brand on a shared axis, pooled estimate on
+ * the bottom rule. This is the conventional way to show a set of studies that
+ * are supposed to be measuring the same thing, and it makes disagreement a
+ * shape rather than a paragraph.
+ */
+function StudyPlot({ family, currentId }: { family: ExperimentFamily; currentId: string }) {
+  const { studies, pooled } = family;
+
+  // Scale spans the brand toplines and the pooled estimate only — not the leaf
+  // extremes inside each tree, which live on the tree's own scale below. The
+  // axis is drawn so the two are never mistaken for one another.
+  const values = [
+    ...studies.flatMap((s) => [s.interval[0], s.interval[1], s.effect]),
+    ...(pooled ? [pooled.interval[0], pooled.interval[1]] : []),
+    0,
+  ];
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const pad = (hi - lo) * 0.1;
+  const domain: [number, number] = [lo - pad, hi + pad];
+  const at = (v: number) => ((v - domain[0]) / (domain[1] - domain[0])) * 100;
+  const ticks = [Math.ceil(domain[0]), 0, Math.floor(domain[1])];
+
+  return (
+    <div className="overflow-hidden rounded-[6px] border border-rule bg-surface">
+      {/* Axis sits above the bar column at the width the rows use. */}
+      <div className="hidden border-b border-rule px-4 pt-3 pb-2 sm:block sm:px-5">
+        <div className={`${ROW} items-end`}>
+          <span className="field-label">Brand</span>
+          <span className="field-label text-right">Effect</span>
+          <div className="relative h-[13px]">
+            {ticks.map((t) => (
+              <span
+                key={t}
+                className="absolute -translate-x-1/2 font-mono text-[9.5px] leading-none text-ink-4"
+                style={{ left: `${at(t)}%` }}
+              >
+                {t > 0 ? `+${t}%` : t < 0 ? `−${Math.abs(t)}%` : "0"}
+              </span>
+            ))}
+          </div>
+          <span className="field-label">Against pooled</span>
+        </div>
+      </div>
+
+      <ul>
+        {studies.map((study) => (
+          <StudyRow key={study.experiment.id} study={study} domain={domain} isCurrent={study.experiment.id === currentId} />
+        ))}
+      </ul>
+
+      {/* Surface, not a tint: the pooled interval is the narrowest bar on the
+          plot and a tinted row behind it kills what little contrast it has.
+          The heavy top rule is enough to mark it as the summary. */}
+      {pooled && (
+        <div className="border-t border-ink bg-surface px-4 py-3.5 sm:px-5">
+          <div className={`${ROW} sm:items-center`}>
+            <div className="min-w-0">
+              <p className="text-[13.5px] leading-snug font-medium text-ink">Pooled, fixed effect</p>
+              <p className="mt-1 font-mono text-[10.5px] leading-snug text-ink-3">
+                95% CI {formatEffect(pooled.interval[0])} to {formatEffect(pooled.interval[1])} · n{" "}
+                {formatCount(family.totalN)}
+              </p>
+            </div>
+            <p
+              className={`font-mono text-[17px] leading-none font-semibold sm:text-right ${
+                TONE[effectTone(pooled)].text
+              }`}
+            >
+              {formatEffect(pooled.effect)}
+            </p>
+            <Forest effect={pooled.effect} interval={pooled.interval} domain={domain} height={20} />
+            <p className="font-mono text-[10px] leading-none tracking-[0.08em] text-ink-3 uppercase">
+              I² {formatPercent(pooled.i2)}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Shared column template so the axis header and every row stay in register. */
+const ROW =
+  "grid gap-x-4 gap-y-2.5 sm:grid-cols-[minmax(0,320px)_72px_minmax(0,1fr)_104px] sm:gap-x-5";
+
+function StudyRow({
+  study,
+  domain,
+  isCurrent,
+}: {
+  study: PatternStudy;
+  domain: [number, number];
+  isCurrent: boolean;
+}) {
+  const e = study.experiment;
+  const brand = BRAND_BY_ID[e.brand_id];
+  const tone = TONE[effectTone(study)];
+
+  return (
+    <li className={`border-b border-rule px-4 py-3.5 last:border-b-0 sm:px-5 ${isCurrent ? "bg-sunk/50" : ""}`}>
+      <div className={`${ROW} sm:items-center`}>
+        <div className="min-w-0">
+          <a
+            href={isCurrent ? undefined : `/laboratory/${e.id}`}
+            className={`group inline-flex items-center gap-2.5 text-[13.5px] leading-snug font-medium text-ink ${
+              isCurrent ? "cursor-default" : ""
+            }`}
+          >
+            <BrandMark initials={brand.initials} />
+            <span
+              className={`underline decoration-transparent underline-offset-[3px] transition-colors ${
+                isCurrent ? "" : "group-hover:decoration-ink-4"
+              }`}
+            >
+              {brand.name}
+              {isCurrent && <span className="ml-1.5 text-ink-4">(this record)</span>}
+            </span>
+          </a>
+          <p className="mt-1.5 font-mono text-[10.5px] leading-snug text-ink-3">
+            {e.id} · 95% CI {formatEffect(study.interval[0])} to {formatEffect(study.interval[1])} · n{" "}
+            {formatCount(study.n)}
+          </p>
+        </div>
+
+        <p className={`font-mono text-[17px] leading-none font-semibold sm:text-right ${tone.text}`}>
+          {formatEffect(study.effect)}
+        </p>
+
+        <Forest effect={study.effect} interval={study.interval} domain={domain} height={20} />
+
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex shrink-0 items-center rounded-[3px] px-1.5 py-1 font-mono text-[9.5px] leading-none font-semibold tracking-[0.08em] uppercase ${tone.tint} ${tone.text}`}
+          >
+            {VERDICT_WORD[study.verdict]}
+          </span>
+          <span className="sm:hidden">
+            <StatusMark value={e.status} />
+          </span>
+        </div>
+      </div>
+    </li>
   );
 }

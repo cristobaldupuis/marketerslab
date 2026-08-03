@@ -43,7 +43,12 @@ function matches(e: Experiment, f: Filters): boolean {
   );
 }
 
-export function RegisterView() {
+/**
+ * Observatory — the wide-angle view. Every record, filterable by the four
+ * taxonomy axes, ordered by recent activity. Formerly the unnamed landing
+ * ("register") view; see DEFINITIONS.md.
+ */
+export function ObservatoryView() {
   const [filters, setFiltersState] = useState<Filters>(readLastFilters);
 
   const results = useMemo(() => ORDERED.filter((e) => matches(e, filters)), [filters]);
@@ -183,8 +188,9 @@ function Thesis() {
     <section className="mx-auto max-w-[1240px] px-5 pt-12 pb-9 sm:px-8 sm:pt-16">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-16">
         <div className="max-w-[42ch]">
+          <p className="field-label">Observatory</p>
           <h1
-            className="text-[34px] leading-[1.08] font-semibold tracking-[-0.015em] text-balance text-ink sm:text-[42px]"
+            className="mt-3 text-[34px] leading-[1.08] font-semibold tracking-[-0.015em] text-balance text-ink sm:text-[42px]"
             style={{ fontStretch: "112%" }}
           >
             Rigor, scaled to the stakes.
