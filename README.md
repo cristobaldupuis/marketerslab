@@ -75,6 +75,11 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
   defaulting to `prefers-color-scheme`. Existing semantic color tokens (franchise, loonshot,
   live, won, lost, stopped, stamp) and the ink/rule neutral scale extend into a dark palette
   rather than being replaced — see the token block in `app/globals.css`.
+- **Kill-criteria templates** — `lib/data/kill-criteria-templates.ts`, six templates
+  covering the touchpoint × risk-class matrix (some cells intentionally share a template).
+  Every seeded experiment references one via `kill_criteria_template_id`; three carry a
+  conscious `kill_criteria_overridden: true` deviation. No UI reads this yet — it's the data
+  model Quarantine (Pass C) will triage against.
 
 ### The four records that carry trees
 
@@ -93,7 +98,7 @@ See [`ROADMAP.md`](./ROADMAP.md) for the full sequencing. Short version:
 
 | Feature | Section | Slot in the code |
 | --- | --- | --- |
-| Kill-criteria template matrix (Touchpoint × Risk class) | Feeds Quarantine's entry logic | New `lib/data/kill-criteria-templates.ts` + `Experiment` field additions |
+| Kill-criteria override confirm-step UI | Feeds Quarantine's triage flow | The data model (`lib/data/kill-criteria-templates.ts` + `Experiment` fields) is built; no UI reads it yet |
 | Quarantine triage view + graduation flow | Quarantine | New `app/quarantine/` route |
 | Agentic plan-builder and roadmap generator | Supercomputer | New `app/api/` route — nothing exists yet |
 | Case-study generator | (unassigned — likely Laboratory or a new section) | Composes from a record plus its tree. Deterministic composition is preferred over a model call here — it cannot hallucinate a number that contradicts the tree beside it. |

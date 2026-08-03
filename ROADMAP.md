@@ -73,44 +73,61 @@ recorded here so they're easy to revisit rather than archaeology later):
 
 ## Pass B — Kill-criteria data model
 
-**Status:** Not started
+**Status:** Done
 **Scope:** Medium
 **Depends on:** Pass A (routes stable enough that Quarantine has somewhere to link into
 once Pass C starts)
 
-- New standalone type, `KillCriteriaTemplate`, keyed by Touchpoint × Risk class (not a full
-  cross-product — cells may share templates where criteria genuinely don't differ):
+- New standalone type, `KillCriteriaTemplate` (`lib/types.ts`), keyed by touchpoint × risk
+  class. Not a full cross-product — CRM shares the `digital-*` templates with paid media,
+  since both are high-velocity digital channels with comparable sample accrual:
 
   ```ts
-  type KillCriteriaTemplate = {
+  interface KillCriteriaTemplate {
     id: string;
     touchpoint: Touchpoint;
-    riskClass: RiskClass;
-    minSampleSize: number;
-    minRuntimeDays: number;
-    maxRuntimeDays: number;
-    winThreshold: string; // e.g. "+5% vs control at 95% confidence"
-  };
+    risk_class: RiskClass;
+    min_sample_size: number;
+    min_runtime_days: number;
+    max_runtime_days: number;
+    win_threshold: string; // e.g. "+5% vs control at 95% confidence"
+  }
   ```
 
-- `Experiment` gains:
+- `Experiment` gained (`lib/types.ts`):
 
   ```ts
-  killCriteriaTemplateId: string;
-  killCriteriaOverridden: boolean;
-  killCriteriaOverrides?: Partial<KillCriteriaFields>;
+  kill_criteria_template_id: string;
+  kill_criteria_overridden: boolean;
+  kill_criteria_overrides?: Partial<KillCriteriaFields>;
   ```
 
-- Mock template data for the touchpoint × risk-class matrix in a new
-  `lib/data/kill-criteria-templates.ts`.
-- Migrate the 20 existing seeded experiments to reference a template ID instead of (or
-  alongside) their current freely-typed `kill_criteria` fields.
+- Six templates in `lib/data/kill-criteria-templates.ts` cover all eight touchpoint × risk
+  cells (`digital-franchise`, `digital-loonshot`, `pdp-franchise`, `pdp-loonshot`,
+  `offline-franchise`, `offline-loonshot`), plus `templateFor()` / `templateIdFor()` lookups
+  and a `MATRIX` table showing which cells share a template.
+- All 20 seeded experiments in `lib/data/experiments.ts` reference a template ID. Their
+  existing freely-typed `kill_criteria` (the pre-registration record, stamp, timeline) is
+  untouched — the template reference sits alongside it, not in place of it. Three records
+  (`EXP-0130`, `EXP-0128`, `EXP-0143`) carry `kill_criteria_overridden: true` with a
+  `max_runtime_days` override, chosen because their `rigor_tier` already diverges from their
+  risk category's default — a team reading a franchise test at deep tier or a loonshot at
+  standard tier is exactly the situation where the standard runway wouldn't fit either.
 - **Does not touch the four-axis taxonomy.** `KillCriteriaTemplate` reads `touchpoint` and
-  `riskClass` off the existing axes — it is a lookup table, not a fifth axis.
+  `risk_class` off the existing axes; `RiskClass` is a type alias for `RiskCategory`, not a
+  new value set.
+- **Field naming**: the original scoping note used camelCase (`killCriteriaTemplateId`,
+  `riskClass` as a distinct field, etc.). Every existing field on `Experiment` and its
+  siblings (`brand_id`, `risk_category`, `loop_stage`, `registered_at`, ...) is snake_case,
+  so the implementation followed that convention instead
+  (`kill_criteria_template_id`, `risk_class`) — an established codebase convention overrides
+  an inline sketch of the shape, not a scope change.
 - Override UX (design now, build later): experiments inherit criteria from their matrix
   cell by default. Editing any inherited value triggers a lightweight confirm step — a
   checkbox acknowledging the deviation, no justification text field. That confirm-step UI
-  is **not** in Pass B's scope; Pass B is the data model and migration only.
+  is **still not built** — Pass B was the data model and migration only, seeded directly
+  rather than through a UI flow. Building the confirm step and wiring it to real edits is
+  Pass C's job, alongside Quarantine itself.
 
 ---
 
@@ -118,8 +135,8 @@ once Pass C starts)
 
 **Status:** Not started
 **Scope:** Medium
-**Depends on:** Pass B (needs `killCriteriaTemplateId` / `killCriteriaOverridden` to know
-who belongs in Quarantine)
+**Depends on:** Pass B (needs `kill_criteria_template_id` / `kill_criteria_overridden` to
+know who belongs in Quarantine)
 
 - New `/quarantine` route and view.
 - Entry logic: an experiment sits in Quarantine if its kill criteria are unconfirmed —
