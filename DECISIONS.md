@@ -210,6 +210,32 @@ points in the lifecycle — not two separate features to build:
    mechanic, timing), not just restating the headline lift — to inform the next
    hypothesis.
 
+### How the agentic surfaces got built (Pass D)
+
+Built as one route (`/supercomputer`) with a mode switch rather than two, which is
+what "same engine, two entry points" has to look like in the UI to stay true. Four
+decisions worth not re-litigating:
+
+- **The fallback is mandatory, not a nicety.** No key, rate limit, timeout or
+  malformed response may reach the client as an error state. `lib/generate/fallback.ts`
+  composes from the real request inputs or the real segment tree, so a degraded
+  response still reads as work done for *this* input. A demo that can fail live on
+  someone else's rate limit is not a demo.
+- **The model never sets `rigor_tier` or `loop_stage`.** Both are derived in
+  `lib/generate/validate.ts` — `rigor_tier` from `RISK_BY[risk_category].rigor_default`,
+  `loop_stage` pinned to `"brief"`. That makes "loonshot with franchise-tight kill
+  criteria" structurally impossible rather than a bug to notice later, which is the
+  whole point of the franchise/loonshot tag changing defaults.
+- **The roadmap generator is handed facts, not prose.** `findDriver` and `findReversal`
+  already carry the "which segment actually drove this" analysis; `lib/generate/facts.ts`
+  feeds their output in as explicit structural facts. Letting the model re-derive the
+  tree from a text summary would have reintroduced exactly the hallucination risk the
+  tree exists to remove.
+- **A proposal is not a record.** `GeneratedProposal` lives in `lib/generate/types.ts`,
+  not `lib/types.ts`, and carries no id, brand or dates. Nothing generated is written to
+  the register — that write path is a separate pass with a human confirm step
+  (`CONTROL_ROOM_SCOPE.md` §5).
+
 ## Case-study generator
 
 Builds a shareable case study from an experiment's full record: hypothesis, plan,
@@ -227,6 +253,9 @@ judges won't see working live anyway:
 
 - Real API integrations with ad platforms, CRM tools, analytics platforms (Meta,
   Google Ads, GA4, etc.). Fabricate/seed all data instead.
+  **Superseded — see "Platform integrations: the cut, reversed" below.** The cut
+  still holds for the designathon window itself; what changed is that this is now
+  a scoped section with a build plan rather than a permanent no.
 - Real multi-tenancy, auth, brand-switching permission systems. Seed 2-3
   fabricated brands in one instance; no login flows.
 - Multi-model routing / cost optimization (e.g. routing to Kimi for cheaper
@@ -236,6 +265,51 @@ judges won't see working live anyway:
 - Portfolio-level CEO/CMO rollup dashboards. Mention as roadmap only.
 - "Artists and soldiers" (Loonshots org-culture concept) — doesn't map cleanly
   onto an experiment record; skip rather than force it in as unused chrome.
+
+## Platform integrations: the cut, reversed
+
+**Original call:** real API integrations with ad platforms were cut outright — no
+visual payoff relative to effort, and a real risk of eating the whole build on
+infrastructure judges would never see working. That reasoning was correct for the
+designathon window and still is.
+
+**What changed:** this is now a scoped section with a build plan rather than a
+permanent no. Full scope in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md),
+sequenced as Pass F in [`ROADMAP.md`](./ROADMAP.md). The parts worth carrying here,
+because they are decisions rather than plans:
+
+- **It's called Field Station, not Control Room.** `control` is already the
+  comparison arm in every seeded record's `design.arms`, so a section named Control
+  Room collides with the product's most load-bearing word. The replacement metaphor —
+  the remote outpost where readings are taken from a population you observe but do
+  not control, samples travelling back to the lab and never the other way — states
+  the read-only boundary in the name itself, which means no future session has to be
+  told the levers don't exist.
+- **Read-only is permanent, not a placeholder.** Nothing writes to Meta or Google:
+  no pause, no budget change, no "apply recommendation," not even as a disabled
+  affordance, because a disabled control reads as a not-yet.
+- **No fifth axis, and `lib/types.ts` does not change by a single field.** The whole
+  schema lives in `lib/external/`, following the precedent that put `GeneratedProposal`
+  in `lib/generate/types.ts` — a proposal isn't a register record, and an ad set isn't
+  even a thing this product owns. `paid_media` already exists as a touchpoint;
+  `AdPlatform` is not an axis.
+- **One write path, and it lands in Quarantine.** A flagged ad set drafts a proposal;
+  a human confirming it creates a `planned` record with `kill_criteria.registered_at`
+  *unset*. A machine-stamped registration is a timestamp, not a pre-registration — so
+  the record sits in Quarantine until a person accepts or overrides the inherited
+  criteria. This is why Pass C blocks that sub-pass.
+- **The infrastructure honesty.** Everything except the final sub-pass runs off
+  fabricated accounts and needs no backend, which keeps this codebase's no-database
+  promise intact. Real OAuth does not: it needs a writable store, encrypted token
+  storage and an identity to hang tokens off, none of which has any precedent here.
+  That sub-pass is where the "no database, no auth" line gets formally retired, and
+  whether it belongs in this repo at all or in the founder's Growth OS (see "Repo
+  strategy" below) is still open. The multi-tenancy cut above is *not* reversed —
+  single-instance is the scoped shape.
+
+`CONTROL_ROOM_SCOPE.md`'s open questions are still open — naming, sequencing against
+Pass C, and several normalization calls (Meta's conversion action type, multi-currency,
+attribution windows) need the founder before F1 starts.
 
 ## Repo strategy
 

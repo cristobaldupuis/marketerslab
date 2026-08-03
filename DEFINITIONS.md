@@ -9,8 +9,9 @@ taxonomy in `lib/types.ts` — see "Things that look arbitrary but are not" in `
 and the four-axis ceiling in `DECISIONS.md`.
 
 **Not every section is a sidebar row.** The sidebar (`components/sidebar-nav.tsx`) lists
-the sections you can land on directly, grouped as *Signal* (Observatory, Vivarium — watch
-the register as it stands) and *Protocol* (Quarantine, Supercomputer — do something to it).
+the sections you can land on directly, grouped as *Signal* (Observatory, Vivarium, and
+Field Station once built — watch the register, and the live spend, as they stand) and
+*Protocol* (Quarantine, Supercomputer — do something to it).
 Laboratory and Microscope are real sections with their own routes and definitions below,
 but they're reached from a record, not from the sidebar — see their entries for why. Full
 reasoning in "Observatory redesign: visual direction and nav regrouping" in `DECISIONS.md`.
@@ -92,6 +93,26 @@ register. Answers "what's live right now" without a filter click.
 
 ---
 
+## Field Station
+
+**Metaphor:** The remote outpost where readings are taken from a population you observe but do
+not control. Instruments run continuously, samples travel back to the lab, and nothing travels
+the other way.
+
+**Function:** Read-only observation of connected ad accounts (Meta, Google Ads), normalized so
+one recommendation layer reads both. Answers "what is the live spend actually doing," which no
+other section can — every other section reads the register, and the register is what the team
+chose to test. Underperforming units are flagged by deterministic rules, narrated by the
+Supercomputer's engine, and can be drafted into an experiment that lands in Quarantine. It never
+writes to the platforms. That is a permanent boundary, not a not-yet.
+
+**Route:** `/field-station` (planned)
+
+**Status:** Not started. See [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md) and
+[`ROADMAP.md`](./ROADMAP.md) Pass F.
+
+---
+
 ## Quarantine
 
 **Metaphor:** The holding area a new specimen sits in before it's cleared to enter the main
@@ -120,8 +141,8 @@ experiment plan) and the roadmap generator (completed experiment → proposed ne
 framed around which lever drove the result). Both are the same underlying engine called at
 different points in the lifecycle, not two separate features.
 
-**Route:** Not yet routed.
+**Route:** `/supercomputer` (`?tab=roadmap` for the roadmap generator; `?id=` preselects a record)
 
-**Status:** Not started. Deferred — this was "Pass 3" in the original build plan
-(`PROJECT_BRIEF.md`) and remains unscoped for the current restructuring effort. Shown as
-disabled in the sidebar so the full six-section IA is visible ahead of the build.
+**Status:** Built. This was "Pass 3" in the original build plan (`PROJECT_BRIEF.md`) and Pass D
+in [`ROADMAP.md`](./ROADMAP.md). One server-side model call behind `app/api/generate`, with a
+mandatory seeded fallback — see `lib/generate/`.

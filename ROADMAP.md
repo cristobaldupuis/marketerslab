@@ -60,6 +60,8 @@ recorded here so they're easy to revisit rather than archaeology later):
   `useEffect`-plus-`setState` sync pattern — see `components/theme-toggle.tsx`).
 - **Quarantine and Supercomputer show in the sidebar now, disabled**, labeled "Coming
   soon," so the six-section IA reads as a whole before Pass C/D exist.
+  **Partly superseded in Pass D** — Supercomputer shipped and is a live sidebar row.
+  Quarantine is still the only `comingSoon` entry in `components/sidebar-nav.tsx`.
 - **Sidebar's Laboratory/Microscope links are context-aware**: disabled ("Open a record
   first") until you're already viewing one of the two, at which point both links jump to
   the *same record* in the other section — lets you flip Microscope ↔ Laboratory while
@@ -155,18 +157,48 @@ know who belongs in Quarantine)
 
 ## Pass D — Supercomputer
 
-**Status:** Not started
-**Scope:** Unscoped
-**Depends on:** No hard dependency on B/C, but sequenced last because it's the least
-defined and the original build plan (`PROJECT_BRIEF.md`) already treated it as its own
-session ("Pass 3... LLM-call orchestration — different problem type... deserves its own
-session").
+**Status:** Done
+**Scope:** Large
+**Depends on:** No hard dependency on B/C. Built as its own session, as the original build
+plan (`PROJECT_BRIEF.md`) always intended ("Pass 3... LLM-call orchestration — different
+problem type... deserves its own session").
 
 - Agentic plan-builder (industry/stage/budget/touchpoint → ranked experiment plans) and
-  roadmap generator (completed experiment → proposed next test). Same underlying engine,
-  two entry points.
-- No route, component, or data-model decisions made yet. Scope this properly before
-  starting rather than inheriting assumptions from this document.
+  roadmap generator (completed experiment → proposed next test) at `/supercomputer`, behind
+  a `SegmentedControl` mode switch rather than as two routes — same engine, two entry
+  points, so the mode switch is the honest shape. `?tab=roadmap` and `?id=` are both
+  addressable, which is what lets the Observatory masthead link straight into the
+  plan-builder.
+- **One server-side model call, and a mandatory fallback.** `app/api/generate/route.ts` is
+  the only outbound call in the codebase. No key, rate limit, timeout or malformed response
+  may reach the client as an error state — every path ends in a 200 carrying either
+  `source: "model"` or `source: "fallback"`, and `lib/generate/fallback.ts` composes the
+  fallback from the real request inputs or the real segment tree so it reads as work done
+  for this input, not canned copy.
+- **A proposal is not a record.** `GeneratedProposal` lives in `lib/generate/types.ts`, not
+  `lib/types.ts`, and is deliberately a smaller shape than `Experiment` — no id, no brand,
+  no dates. Nothing generated here is written to the register; turning a proposal into a
+  record is a separate write path with its own confirm step (Pass F5).
+- **The model never sets `rigor_tier` or `loop_stage`.** `lib/generate/validate.ts` derives
+  `rigor_tier` from `RISK_BY[risk_category].rigor_default` and pins `loop_stage` to
+  `"brief"`, which makes "loonshot with franchise-tight kill criteria" structurally
+  impossible rather than a bug to catch later. `touchpoint` and `risk_category` are coerced
+  against the taxonomy enums or the proposal is dropped — a silently invented touchpoint is
+  worse than one fewer proposal.
+- **The roadmap generator is handed facts, not a summary.** `lib/generate/facts.ts` reads
+  `findDriver` / `findReversal` / `pathTo` off the record's segment tree and `familyOf` off
+  the pattern view, then feeds them in as explicit "Structural fact —" lines. The model
+  builds on the lever the code already found rather than re-deriving the analysis from
+  prose. Only a `complete` record carrying a `segment_tree` is eligible.
+- **Does not touch the four-axis taxonomy.** `lib/generate/*` reads `TOUCHPOINTS` and
+  `RISK_CATEGORIES` off `lib/taxonomy.ts`; it adds nothing to them.
+- `components/proposal-card.tsx` reuses the register's own chips, marks and loop meter but is
+  deliberately not `ExperimentCard` — a proposal has to show its power sketch and kill
+  criteria on the card, which the compact register card never does.
+
+**Watch:** `lib/generate/*` is the shared engine the Field Station narrative layer extends
+(Pass F4) — `GenerateRequest` is already a discriminated union on `mode`, and the seam is
+the facts assembler. Read `CONTROL_ROOM_SCOPE.md` §3 before adding a second one.
 
 ---
 
@@ -209,8 +241,54 @@ direction. See "Observatory redesign: visual direction and nav regrouping" in
 
 **Watch:** the priority tree currently ignores brand and touchpoint as split
 variables — it only reads loop stage and risk category. Adding a third level
-(touchpoint) is a natural Pass F if the active register grows past what two
-levels can show cleanly; not needed yet at 20 seeded records.
+(touchpoint) is a natural follow-on pass if the active register grows past what
+two levels can show cleanly; not needed yet at 20 seeded records. This note
+originally called that work "a natural Pass F" — Pass F is Field Station (below),
+so the third level stays unlettered until someone picks it up.
+
+---
+
+## Pass F — Field Station
+
+**Status:** Not started
+**Scope:** Large — broken into F1–F6
+**Depends on:** Pass D for the shared generation engine (F4), and **Pass C for the
+Quarantine hand-off (F5)**.
+
+Scoped in full in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md). Do not re-derive its
+calls from this summary — it is the source of truth for the schema, the engine seam, the
+OAuth gap and the write path.
+
+- Read-only observation of connected ad accounts (Meta, Google Ads), normalized so one
+  recommendation layer reads both. Named **Field Station**, not "Control Room": `control` is
+  already the comparison arm in every record's `design.arms`, and a control room implies
+  levers this section will never have.
+- **Never writes to the platforms.** Read-only is a permanent product boundary, not a
+  placeholder — no pause, no budget change, no "apply recommendation", not even as a
+  disabled affordance.
+- **`lib/types.ts` does not change.** The whole schema lives in `lib/external/`, following
+  the `lib/generate/types.ts` precedent — an ad set is not a register record. No fifth
+  taxonomy axis under any framing; `paid_media` already exists as a touchpoint.
+- The single write path is a drafted proposal landing in Quarantine with
+  `kill_criteria.registered_at` **unset** — a machine-stamped registration is a timestamp,
+  not a pre-registration. That is why the hand-off target is Quarantine and why Pass C
+  blocks F5.
+
+| Sub-pass | Scope | Depends on |
+| --- | --- | --- |
+| **F1** | Normalized schema + fabricated accounts, derived metric readers | nothing |
+| **F2** | `/field-station` route and read-only UI | F1 |
+| **F3** | Deterministic flagging heuristics (`lib/external/rules.ts`) | F1, sequence after F2 |
+| **F4** | LLM narrative layer — `mode: "field_station"` on the Pass D engine | F3 |
+| **F5** | The Quarantine hand-off write path | F4 **and Pass C** |
+| **F6** | Real OAuth and sync | a persistence decision, plus platform review lead times |
+
+**Watch:** F6 is the only sub-pass that needs infrastructure this codebase has never had — a
+writable store, encrypted token storage, and an identity to hang tokens off. F1–F5 are
+sequenced so they demo completely off fabricated accounts without it, the same move
+`lib/generate/fallback.ts` already makes for the model call. Note also that Google Ads ships
+no read-only OAuth scope; read-only there is code-level discipline, not a grant-level
+guarantee. See `CONTROL_ROOM_SCOPE.md` §4 and its open questions before starting F6.
 
 ---
 
@@ -225,7 +303,9 @@ Carried forward from the frontend structure audit:
   Observatory/Laboratory/Microscope. Rename in the same pass that moves the functionality,
   not as separate cleanup later.
 - **Four-axis taxonomy is locked.** Neither "section" nor `KillCriteriaTemplate` may become
-  a fifth taxonomy axis. Section is UI-only; the template matrix reads existing axes.
+  a fifth taxonomy axis. Section is UI-only; the template matrix reads existing axes. The
+  same holds for Pass F: `AdPlatform` is not an axis, and `ConnectedAccount.brand_id` points
+  at the existing brand axis rather than extending it.
 - **Dark mode is net-new.** It was not scoped or partially built anywhere before Pass A —
   treat every existing color reference in components as needing a dark-mode check, not just
   the token block in `app/globals.css`.
