@@ -75,7 +75,9 @@ function Colophon() {
         <p className="font-mono text-[11px] text-ink-3">
           Every record here is fabricated demo data. No live integrations.
         </p>
-        <p className="font-mono text-[11px] text-ink-4">Pass 1 — taxonomy and rigor dial</p>
+        <p className="font-mono text-[11px] text-ink-4">
+          Taxonomy · rigor dial · segment trees · cross-brand patterns
+        </p>
       </div>
     </footer>
   );

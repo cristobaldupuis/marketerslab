@@ -49,12 +49,26 @@ auth. All data is a static TypeScript module.
 
 Every other record has `segment_tree: null` and keeps its "no tree data" state.
 
+### Cross-brand pattern view — `/patterns/[id]`
+
+`components/pattern-view.tsx`, reached from the segment analysis on any record that ran at more
+than one brand. A family is derived, not tagged: **same title, different brand** (see
+`lib/patterns.ts`). Three parts:
+
+- **A pooled estimate**, inverse-variance weighted, so a brand with a wide interval cannot pull
+  the number as hard as a brand with a tight one.
+- **I², with Cochran's Q behind it** — the share of the spread between brands that is real
+  rather than sampling error. On the checkout-threshold family it is 94%, which is the whole
+  answer: this does not generalise. Higgins' conventional cut points pick the wording.
+- **A forest plot**, then the same `SegmentTree` component with brand as the root split. Shares
+  are renormalised to the pooled population and node ids namespaced per brand.
+
 ## Deliberately not built yet
 
 | Pass | Feature | Slot in the code |
 | --- | --- | --- |
 | 3 | Agentic plan-builder and roadmap generator | New `app/api/` route — nothing exists yet |
-| 4 | Cross-brand pattern view, case-study generator | Brand as one more split variable on the Pass 2 tree. The three checkout-threshold siblings above are the dataset it reads. |
+| 4b | Case-study generator | Composes from a record plus its tree. Deterministic composition is preferred over a model call here — it cannot hallucinate a number that contradicts the tree beside it. |
 
 Also out of scope by design: real auth, real multi-tenancy, real platform integrations.
 

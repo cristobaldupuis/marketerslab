@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { BRAND_BY_ID } from "@/lib/data/brands";
 import { daysBetween, formatCount, formatDate, formatPercent } from "@/lib/format";
+import { familyOf } from "@/lib/patterns";
 import { RIGOR_BY, RISK_BY } from "@/lib/taxonomy";
 import type { Experiment } from "@/lib/types";
 import { BrandMark, LoopMeter, RiskChip, StatusMark, TouchpointChip, VerdictText } from "./marks";
@@ -186,6 +187,7 @@ function DeepRead({ experiment: e }: { experiment: Experiment }) {
 
       <Section eyebrow="02" title="Segment analysis" delay={80}>
         <TreeSlot experiment={e} />
+        <FamilyLink experiment={e} />
       </Section>
 
       <Section eyebrow="03" title="Kill criteria" delay={160}>
@@ -528,6 +530,41 @@ function TreeSlot({ experiment: e }: { experiment: Experiment }) {
       tree={e.segment_tree}
       metricLabel={e.headline?.label ?? e.design.primary_metric}
     />
+  );
+}
+
+/**
+ * Sits under the tree because it is the question a reader has the moment they
+ * have finished reading one: does this hold anywhere else? Only appears when
+ * the same test genuinely ran at another brand.
+ */
+function FamilyLink({ experiment: e }: { experiment: Experiment }) {
+  const family = familyOf(e.id);
+  if (!family?.pooled || family.studies.length < 2) return null;
+
+  const others = family.studies
+    .filter((s) => s.experiment.id !== e.id)
+    .map((s) => BRAND_BY_ID[s.experiment.brand_id].name);
+
+  return (
+    <Link
+      href={`/patterns/${family.anchorId}`}
+      className="group mt-4 flex flex-col gap-3 rounded-[6px] border border-rule bg-surface px-4 py-3.5 transition-colors hover:border-ink sm:flex-row sm:items-center sm:gap-5 sm:px-5"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="field-label">Also run at</p>
+        <p className="mt-2 text-[14px] leading-snug text-ink">
+          {others.join(" and ")} — same design, same root split.{" "}
+          <span className="text-ink-2">
+            {formatPercent(family.pooled.i2)} of the spread between the {family.studies.length}{" "}
+            results is real difference between brands, not sampling noise.
+          </span>
+        </p>
+      </div>
+      <span className="shrink-0 self-start rounded-[4px] border border-ink px-3 py-2 font-mono text-[11px] leading-none tracking-[0.08em] text-ink uppercase transition-colors group-hover:bg-ink group-hover:text-paper sm:self-auto">
+        Pattern view →
+      </span>
+    </Link>
   );
 }
 

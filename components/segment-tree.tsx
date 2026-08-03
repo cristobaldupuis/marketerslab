@@ -7,12 +7,13 @@ import {
   effectTone,
   findDriver,
   findReversal,
+  findReversals,
   leavesOf,
   pathTo,
   walk,
-  type EffectTone,
 } from "@/lib/segments";
 import type { SegmentNode } from "@/lib/types";
+import { TONE } from "./effect-tone";
 
 /**
  * The segment decision tree.
@@ -28,16 +29,18 @@ import type { SegmentNode } from "@/lib/types";
  * cannot be called. Node chrome stays neutral so nothing competes with it.
  */
 
-const TONE: Record<
-  EffectTone,
-  { text: string; band: string; tick: string; tint: string; word: string }
-> = {
-  positive: { text: "text-won", band: "bg-won-tint", tick: "bg-won", tint: "bg-won-tint", word: "lifts" },
-  negative: { text: "text-lost", band: "bg-lost-tint", tick: "bg-lost", tint: "bg-lost-tint", word: "falls" },
-  neutral: { text: "text-ink-2", band: "bg-rule/70", tick: "bg-ink-4", tint: "bg-sunk", word: "inside noise" },
-};
-
-export function SegmentTree({ tree, metricLabel }: { tree: SegmentNode; metricLabel: string }) {
+export function SegmentTree({
+  tree,
+  metricLabel,
+  // How the root relates to its branches. Defaults to the single-experiment
+  // case; the cross-brand view pools rather than averages, and saying "average"
+  // there would be wrong in a way this product cannot afford to be.
+  toplineFraming = "is an average over the branches below",
+}: {
+  tree: SegmentNode;
+  metricLabel: string;
+  toplineFraming?: string;
+}) {
   const [selectedId, setSelectedId] = useState(tree.id);
 
   const model = useMemo(() => {
@@ -56,6 +59,7 @@ export function SegmentTree({ tree, metricLabel }: { tree: SegmentNode; metricLa
       domain: effectDomain(tree),
       leaves: leavesOf(tree),
       reversal: findReversal(tree),
+      reversalIds: new Set(findReversals(tree).map((n) => n.id)),
       driver: findDriver(tree),
     };
   }, [tree]);
@@ -71,6 +75,7 @@ export function SegmentTree({ tree, metricLabel }: { tree: SegmentNode; metricLa
         reversal={model.reversal}
         onJump={setSelectedId}
         metricLabel={metricLabel}
+        toplineFraming={toplineFraming}
       />
 
       {/* Wide enough for the dendrogram at lg; the scroller is a seatbelt for
@@ -81,7 +86,7 @@ export function SegmentTree({ tree, metricLabel }: { tree: SegmentNode; metricLa
           domain={model.domain}
           selectedId={selectedId}
           onPath={onPath}
-          reversalId={model.reversal?.id ?? null}
+          reversalIds={model.reversalIds}
           order={model.order}
           parentOf={model.parentOf}
           firstChildOf={model.firstChildOf}
@@ -101,7 +106,7 @@ export function SegmentTree({ tree, metricLabel }: { tree: SegmentNode; metricLa
           live region that re-mounts with its content never announces. */}
       <p aria-live="polite" className="sr-only">
         {selected.label}: {formatEffect(selected.effect)}, 95% interval {formatEffect(selected.interval[0])}{" "}
-        to {formatEffect(selected.interval[1])}, {formatShare(selected.share)} of the test population.
+        to {formatEffect(selected.interval[1])}, {formatShare(selected.share)} of the population.
       </p>
 
       <NodeDetail
@@ -134,11 +139,13 @@ function Preamble({
   reversal,
   onJump,
   metricLabel,
+  toplineFraming,
 }: {
   root: SegmentNode;
   reversal: SegmentNode | null;
   onJump: (id: string) => void;
   metricLabel: string;
+  toplineFraming: string;
 }) {
   return (
     <div className="flex flex-col gap-4 border-b border-rule pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
@@ -148,8 +155,8 @@ function Preamble({
           <span className={`font-mono font-medium ${TONE[effectTone(root)].text}`}>
             {formatEffect(root.effect)}
           </span>{" "}
-          is an average over the branches below. Click any node to read its sub-population, split
-          variable, sample and interval.
+          {toplineFraming}. Click any node to read its sub-population, split variable, sample and
+          interval.
         </p>
         <Legend />
       </div>
@@ -203,7 +210,7 @@ interface CanvasProps {
   domain: [number, number];
   selectedId: string;
   onPath: Set<string>;
-  reversalId: string | null;
+  reversalIds: Set<string>;
   order: string[];
   parentOf: Record<string, string | undefined>;
   firstChildOf: Record<string, string | undefined>;
@@ -276,7 +283,7 @@ function Subtree({
           domain={p.domain}
           selected={node.id === p.selectedId}
           onPath={isOnPath}
-          isReversal={node.id === p.reversalId}
+          isReversal={p.reversalIds.has(node.id)}
           onSelect={p.onSelect}
           onKeyDown={onKeyDown}
         />
@@ -366,7 +373,7 @@ function NodeCard({
       </span>
 
       <span className="mt-2 block">
-        <Forest node={node} domain={domain} />
+        <Forest effect={node.effect} interval={node.interval} domain={domain} />
       </span>
 
       {/* Only parents carry this. Repeating "leaf" on every terminal node says
@@ -388,21 +395,40 @@ function NodeCard({
  * A forest-plot row rather than a bar chart, because the question at a node is
  * "does this interval clear zero", not "how tall is this".
  */
-function Forest({ node, domain }: { node: SegmentNode; domain: [number, number] }) {
-  const tone = TONE[effectTone(node)];
+export function Forest({
+  effect,
+  interval,
+  domain,
+  height = 13,
+}: {
+  effect: number;
+  interval: [number, number];
+  domain: [number, number];
+  height?: number;
+}) {
+  const tone = TONE[effectTone({ interval })];
   const at = (v: number) => ((v - domain[0]) / (domain[1] - domain[0])) * 100;
-  const [lo, hi] = node.interval;
+  const [lo, hi] = interval;
+  const inset = height > 16 ? 5 : 3;
 
   return (
-    <span className="relative block h-[13px] w-full overflow-hidden rounded-[2px] bg-paper-deep/70">
+    <span
+      className="relative block w-full overflow-hidden rounded-[2px] bg-paper-deep/70"
+      style={{ height }}
+    >
       <span
-        className={`absolute top-[3px] bottom-[3px] rounded-[1px] ${tone.band}`}
-        style={{ left: `${at(lo)}%`, width: `${Math.max(at(hi) - at(lo), 0.8)}%` }}
+        className={`absolute rounded-[1px] ${tone.band}`}
+        style={{
+          top: inset,
+          bottom: inset,
+          left: `${at(lo)}%`,
+          width: `${Math.max(at(hi) - at(lo), 0.8)}%`,
+        }}
       />
       <span className="absolute inset-y-0 w-px bg-rule-2" style={{ left: `${at(0)}%` }} />
       <span
         className={`absolute inset-y-[1px] w-[2px] ${tone.tick}`}
-        style={{ left: `calc(${at(node.effect)}% - 1px)` }}
+        style={{ left: `calc(${at(effect)}% - 1px)` }}
       />
     </span>
   );
@@ -438,25 +464,33 @@ function PopulationBand({
               key={leaf.id}
               type="button"
               onClick={() => onSelect(leaf.id)}
-              title={`${leaf.label} — ${formatEffect(leaf.effect)}, ${formatShare(leaf.share)} of the test population`}
+              title={`${leaf.label} — ${formatEffect(leaf.effect)}, ${formatShare(leaf.share)} of the population`}
               aria-pressed={selected}
               style={{ width: `${leaf.share * 100}%` }}
-              className={`relative flex min-w-0 flex-col justify-center px-2 text-left transition-colors duration-200 ${tone.tint} ${
+              className={`relative flex min-w-0 flex-col justify-center overflow-hidden px-2 text-left transition-colors duration-200 ${tone.tint} ${
                 selected ? "outline-2 -outline-offset-2 outline-ink" : "hover:brightness-[0.97]"
               }`}
             >
-              <span className={`font-mono text-[12px] leading-none font-semibold ${tone.text}`}>
-                {formatEffect(leaf.effect)}
-              </span>
-              <span className="mt-1 truncate font-mono text-[9.5px] leading-none text-ink-3">
-                {formatShare(leaf.share)}
-              </span>
+              {/* A pooled tree can put a dozen leaves in this band, and a 2%
+                  segment has no room for a figure. Below the threshold the
+                  block still carries its colour, share and tooltip — it just
+                  stops trying to print a number it cannot fit. */}
+              {leaf.share >= 0.05 && (
+                <span className={`truncate font-mono text-[12px] leading-none font-semibold ${tone.text}`}>
+                  {formatEffect(leaf.effect)}
+                </span>
+              )}
+              {leaf.share >= 0.08 && (
+                <span className="mt-1 truncate font-mono text-[9.5px] leading-none text-ink-3">
+                  {formatShare(leaf.share)}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
       <p className="mt-2 text-[12.5px] leading-snug text-ink-3">
-        Every household in the test sits in exactly one of these. Width is share of the test
+        Every household in this analysis sits in exactly one of these. Width is share of the
         population, not share of the effect.
       </p>
     </div>
@@ -507,7 +541,7 @@ function NodeDetail({
         </div>
         <p className="mt-2.5 font-mono text-[11px] leading-[1.6] text-ink-3">
           {metricLabel} · 95% CI {formatEffect(node.interval[0])} to {formatEffect(node.interval[1])} ·{" "}
-          {formatShare(node.share)} of the test population · n = {formatCount(node.n)} ·{" "}
+          {formatShare(node.share)} of the population · n = {formatCount(node.n)} ·{" "}
           {node.split ? `splits on ${node.split}` : "leaf"}
         </p>
       </div>
@@ -526,13 +560,13 @@ function NodeDetail({
           {isReversal && (
             <p className={`mt-4 border-l-2 border-lost py-1 pl-4 text-[14px] leading-[1.6] text-ink-2`}>
               <span className="field-label mr-2 align-middle text-lost">Against the topline</span>
-              The record reads{" "}
+              The topline reads{" "}
               <span className="font-mono font-medium text-ink">{formatEffect(root.effect)}</span>. This
               segment is{" "}
               <span className="font-mono font-medium text-ink">{formatShare(node.share)}</span> of the test
               population and moved{" "}
               <span className="font-mono font-medium text-lost">{formatEffect(node.effect)}</span> — the
-              other way. The headline is an average of branches that disagree.
+              other way. A topline summarising branches this far apart is not a number to roll out on.
             </p>
           )}
 
@@ -542,8 +576,8 @@ function NodeDetail({
               <span className="font-mono font-medium text-ink">{formatShare(node.share)}</span> of the
               population moving{" "}
               <span className="font-mono font-medium text-won">{formatEffect(node.effect)}</span> is what
-              carries the {formatEffect(root.effect)} average. Roll the treatment out beyond this segment
-              and the average will not follow.
+              carries the {formatEffect(root.effect)} topline. Roll the treatment out beyond this segment
+              and the topline will not follow.
             </p>
           )}
 
