@@ -8,6 +8,7 @@ import { RIGOR_BY, RISK_BY } from "@/lib/taxonomy";
 import type { Experiment } from "@/lib/types";
 import { BrandMark, LoopMeter, RiskChip, StatusMark, TouchpointChip, VerdictText } from "./marks";
 import { RigorDial, type ReadDepth } from "./rigor-dial";
+import { SegmentTree } from "./segment-tree";
 
 export function ExperimentDetail({ experiment: e }: { experiment: Experiment }) {
   // Deep records open deep. The dial is still the reader's to move — this is
@@ -510,36 +511,38 @@ function RiskPostureBlock({ experiment: e }: { experiment: Experiment }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Pass 2 slot                                                                 */
+/* Segment tree                                                                */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Reserved space for the decision tree. Deliberately not a grey box — it holds
- * the height the tree will occupy and states whether this record already has
- * tree data seeded, so Pass 2 has an unambiguous slot to fill.
+ * The tree is the primary way a result is understood on this record, so the
+ * slot is either the tree itself or an honest statement that this experiment
+ * was never read at segment level. It is deliberately never a placeholder for
+ * an analysis that does not exist.
  */
 function TreeSlot({ experiment: e }: { experiment: Experiment }) {
-  const seeded = e.segment_tree !== null;
+  if (!e.segment_tree) return <NoTreeData />;
 
+  return (
+    <SegmentTree
+      tree={e.segment_tree}
+      metricLabel={e.headline?.label ?? e.design.primary_metric}
+    />
+  );
+}
+
+function NoTreeData() {
   return (
     <div className="relative overflow-hidden rounded-[6px] border border-dashed border-rule-2 bg-surface/50">
       <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
         <TreeSkeleton />
         <p className="mt-6 font-mono text-[10px] tracking-[0.16em] text-ink-3 uppercase">
-          Segment decision tree — Pass 2
+          No tree data
         </p>
         <p className="mt-2.5 max-w-[46ch] text-[13.5px] leading-[1.6] text-ink-2">
-          {seeded
-            ? "This record has segment data seeded. The interactive tree renders here: click a node to see the sub-population, split variable, sample size and effect at that node."
-            : "No segment data on this record. Deep-tier experiments with a concluded result get a tree; this one reads on the topline."}
-        </p>
-        <p
-          className={`mt-4 inline-flex items-center gap-2 rounded-[3px] px-2 py-1 font-mono text-[10px] tracking-[0.08em] uppercase ${
-            seeded ? "bg-sunk text-ink-2" : "bg-transparent text-ink-4"
-          }`}
-        >
-          <span aria-hidden className={`size-[5px] rounded-full ${seeded ? "bg-ink-2" : "bg-ink-4"}`} />
-          {seeded ? "Tree data seeded" : "No tree data"}
+          This experiment was not read at segment level. A tree is only worth building where the
+          sample supports it and the decision turns on who moved, not just whether anything did —
+          this one reads on the topline.
         </p>
       </div>
     </div>

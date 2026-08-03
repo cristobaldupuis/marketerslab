@@ -122,6 +122,31 @@ happened.
 - Brand is available as a split variable, which is what makes the cross-brand
   pattern view (below) mostly free once the base tree view is built.
 
+### How the tree got built (Pass 2)
+
+Four decisions worth not re-litigating later:
+
+- **Connectors are CSS borders on pseudo-elements, not a measured SVG overlay.**
+  A measured layout would need refs and a layout effect, and the React Compiler
+  rules in this repo make `setState` in an effect an error. More importantly, the
+  border approach is what lets the *same markup* be a left-to-right dendrogram on
+  a desktop and an indented outline on a phone — a phone is too narrow for a
+  dendrogram well before it is too narrow to fit one, so the small layout is a
+  different form, not a shrunken one. Breakpoint is `lg`.
+- **Every node is a forest-plot row on one shared scale.** Point estimate, 95%
+  interval, zero. The question at a node is "does this interval clear zero", not
+  "how tall is this bar" — and per-node scales would let a −1.9% and a +14.6%
+  look the same size, which is exactly the misreading the tree exists to prevent.
+  Neutral tone means "the interval straddles zero", never "the effect is small".
+- **The reversal is derived, not tagged.** `findReversal` in `lib/segments.ts`
+  looks for the largest leaf that moved significantly against the topline's sign.
+  Nothing in the seed data flags it. That matters because Pass 4 adds brand as a
+  split variable, and the same function will find brand-specific reversals for
+  free.
+- **A population band under the tree, leaves laid end to end at true share.**
+  The fastest read in the view: how much of the test actually sat in the segment
+  that went the other way, drawn to scale rather than asserted in a sentence.
+
 ## Cross-brand pattern view (the agency/holding-company case)
 
 The feature that a single-marketer tool structurally cannot offer, and the
@@ -136,6 +161,15 @@ strongest evidence for the "beyond Motion" and "holding company" pitch.
 - This is a small technical add on top of the base tree (brand as one more
   categorical feature) for a large narrative payoff — don't build separate
   infrastructure for it.
+- **The dataset for it is already seeded.** The checkout-threshold test runs at
+  all three brands — `EXP-0112` (Sundry), `EXP-0116` (Marlow & Field), `EXP-0123`
+  (Ridgeline) — with the same design and the same root split variable, so the
+  three trees are readable against each other. They partly agree: the
+  near-threshold branch lifts at all three. They partly disagree, and the
+  disagreement is the point — at Sundry the effect reverses on mobile, at Marlow
+  it reverses for subscribers who already had free delivery, and at Ridgeline the
+  near-threshold branch is only 8% of the population so the mechanic has nowhere
+  to work. Do not "tidy" these into agreeing.
 
 ## Agentic features
 
