@@ -26,7 +26,7 @@ const SECTIONS: Section[] = [
   { mark: "MC", name: "Microscope", blurb: "Close read of one record", href: "/microscope", needsRecord: true },
   { mark: "LB", name: "Laboratory", blurb: "Design, evidence, patterns", href: "/laboratory", needsRecord: true },
   { mark: "QT", name: "Quarantine", blurb: "Kill criteria unconfirmed", href: "/quarantine", comingSoon: true },
-  { mark: "SC", name: "Supercomputer", blurb: "Plan-builder, roadmap gen", href: "/supercomputer", comingSoon: true },
+  { mark: "SC", name: "Supercomputer", blurb: "Plan-builder, roadmap gen", href: "/supercomputer" },
 ];
 
 /** Pulls the record id out of the path when we're already inside a
