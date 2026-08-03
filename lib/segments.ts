@@ -15,8 +15,10 @@ import type { SegmentNode } from "./types";
  */
 export type EffectTone = "positive" | "negative" | "neutral";
 
-export function effectTone(node: SegmentNode): EffectTone {
-  const [lo, hi] = node.interval;
+/** Takes anything carrying an interval, not just a node — the cross-brand view
+ *  tones whole studies with the same rule. */
+export function effectTone(subject: { interval: [number, number] }): EffectTone {
+  const [lo, hi] = subject.interval;
   if (lo > 0 && hi > 0) return "positive";
   if (lo < 0 && hi < 0) return "negative";
   return "neutral";
@@ -68,15 +70,22 @@ export function effectDomain(root: SegmentNode): [number, number] {
 const sign = (n: number) => (n < 0 ? -1 : 1);
 
 /**
- * A leaf that moved significantly against the topline. This is the beat the
- * whole view is built around: a headline win that reversed inside one
- * sub-population. Largest such segment wins, because "how much of the
- * population went the other way" is the question a reader actually has.
+ * Every leaf that moved significantly against the topline. On a single
+ * experiment this is usually one segment — the beat the whole view is built
+ * around, a headline win that reversed inside one sub-population. On a pooled
+ * cross-brand tree it is usually several, one per brand, and marking only one
+ * of them would tell a smaller story than the data does.
  */
-export function findReversal(root: SegmentNode): SegmentNode | null {
-  const against = leavesOf(root).filter(
+export function findReversals(root: SegmentNode): SegmentNode[] {
+  return leavesOf(root).filter(
     (leaf) => effectTone(leaf) !== "neutral" && sign(leaf.effect) !== sign(root.effect),
   );
+}
+
+/** The one to jump to: the largest, because "how much of the population went
+ *  the other way" is the question a reader actually has. */
+export function findReversal(root: SegmentNode): SegmentNode | null {
+  const against = findReversals(root);
   if (!against.length) return null;
   return against.reduce((best, leaf) => (leaf.share > best.share ? leaf : best));
 }

@@ -20,6 +20,9 @@ exists and where the later passes plug in.
 - **Four taxonomy axes is the ceiling.** Legibility in a 3-minute demo beats completeness.
 - **`kill_criteria.registered_at` always precedes `launched_at`.** The UI leans on that gap as
   proof the criteria were pre-registered. Do not seed data that breaks it.
+- **Identical titles are load-bearing.** Records sharing a title at different brands are the
+  same test, and that is the only thing that groups them into a cross-brand family
+  (`lib/patterns.ts`). Deduplicating those titles would silently delete the pattern view.
 
 ## Conventions
 

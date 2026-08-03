@@ -161,6 +161,29 @@ strongest evidence for the "beyond Motion" and "holding company" pitch.
 - This is a small technical add on top of the base tree (brand as one more
   categorical feature) for a large narrative payoff — don't build separate
   infrastructure for it.
+### How the pattern view got built (Pass 4)
+
+- **A family is derived from the title, not from a new field.** Four taxonomy
+  axes is the ceiling, and "which test is this a replication of" is a join key
+  rather than a browsing axis — so it earns no schema change. Same title,
+  different brand, same test. The cost is that retitling a record silently
+  removes it from its family; that is written down in AGENTS.md.
+- **Heterogeneity is the answer, so it is the headline.** "Does this pattern
+  generalise" is not an adjective, it is I². The page leads with the pooled
+  estimate and I² together, because either one alone is misleading — a pooled
+  +0.9% looks like a small win until you see that 94% of the spread behind it is
+  real brand difference.
+- **Inverse-variance, not n-weighted.** An n-weighted average of the three runs
+  gives +2.2% and looks like a modest win. Weighting by precision gives +0.9%
+  with an interval that touches zero, which is the honest read. Using the wrong
+  weighting here would have produced exactly the false confidence this product
+  exists to prevent.
+- **The tree component is reused unchanged.** The pooled tree is a real
+  `SegmentNode` with `split: "Brand"` — ids namespaced per brand and shares
+  renormalised to the pooled population — so `pathTo`, `findReversals` and the
+  shared scale all work on it with no special-casing. That is what "brand is one
+  more split variable" is supposed to mean, and it only cost a builder function.
+
 - **The dataset for it is already seeded.** The checkout-threshold test runs at
   all three brands — `EXP-0112` (Sundry), `EXP-0116` (Marlow & Field), `EXP-0123`
   (Ridgeline) — with the same design and the same root split variable, so the
