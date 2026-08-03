@@ -1,3 +1,4 @@
+import { initialsOf } from "@/lib/format";
 import { LOOP_STAGE_ORDER, LOOP_STAGES, RISK_BY, STATUS_BY, TOUCHPOINT_BY } from "@/lib/taxonomy";
 import type { ExperimentStatus, LoopStage, Outcome, RiskCategory, Touchpoint } from "@/lib/types";
 
@@ -142,6 +143,20 @@ export function BrandMark({ initials }: { initials: string }) {
   return (
     <span className="inline-flex size-[22px] shrink-0 items-center justify-center rounded-[3px] border border-rule-2 bg-sunk font-mono text-[10px] leading-none font-semibold tracking-[0.02em] text-ink-2">
       {initials}
+    </span>
+  );
+}
+
+/** Round, where BrandMark is square — the shape difference is what keeps
+ *  "which brand" and "which person" from being mistaken for one another at a
+ *  glance when both marks sit in the same row. */
+export function OwnerMark({ name }: { name: string }) {
+  return (
+    <span
+      title={name}
+      className="inline-flex size-[18px] shrink-0 items-center justify-center rounded-full border border-rule-2 bg-sunk font-mono text-[9px] leading-none font-semibold tracking-[0.02em] text-ink-2"
+    >
+      {initialsOf(name)}
     </span>
   );
 }

@@ -64,6 +64,10 @@ recorded here so they're easy to revisit rather than archaeology later):
   first") until you're already viewing one of the two, at which point both links jump to
   the *same record* in the other section — lets you flip Microscope ↔ Laboratory while
   reading rather than dead-ending back at Observatory.
+  **Superseded in Pass E** — both were dropped from the sidebar list entirely rather than
+  kept as a disabled row. The Microscope ↔ Laboratory cross-navigation this decision
+  describes still works, it just lives on the records themselves (`RecordHeader`'s
+  back-link, `MicroscopeView`'s "Open in Laboratory" hint) rather than in the sidebar.
 - **Laboratory's Patterns tab lives on every family member's URL**, not just the anchor's.
   `familyOf(id)` is computed per-record, so viewing a sibling experiment's Laboratory page
   and switching to Patterns shows the same pooled family data — no forced navigation to
@@ -163,6 +167,50 @@ session").
   two entry points.
 - No route, component, or data-model decisions made yet. Scope this properly before
   starting rather than inheriting assumptions from this document.
+
+---
+
+## Pass E — Observatory redesign & nav regrouping
+
+**Status:** Done
+**Scope:** Medium
+**Depends on:** Pass A (the six-section IA and sidebar it restructures)
+
+Prompted by reference screenshots showing a denser, more conventional SaaS visual
+direction. See "Observatory redesign: visual direction and nav regrouping" in
+`DECISIONS.md` for the full reasoning; this is the build-log summary.
+
+- **Sidebar regrouped into two labeled sections**, replacing the flat six-row list:
+  *Signal* (Observatory, Vivarium) and *Protocol* (Quarantine, Supercomputer).
+  Laboratory and Microscope no longer appear in the sidebar at all — see the
+  superseded note on Pass A above. `components/sidebar-nav.tsx` gained small line
+  icons per section (`components/nav-icons.tsx`) in place of the two-letter marks,
+  and a "Growth science" tagline under the wordmark.
+- **New pipeline-priority tree**, a second Observatory view (`Cards` / `Priority
+  tree` via `SegmentedControl`) answering "what should run next" — distinct from
+  the segment tree; see the DECISIONS.md entry for why these are two separate
+  things that happen to share connector CSS. New files: `lib/priority.ts` (pure
+  grouping/prompt logic, mirrors `lib/segments.ts`'s style) and
+  `components/priority-tree.tsx`.
+- **Observatory masthead + stat-tile strip**: last-synced timestamp (real —
+  max `updated_at` across the register), a "Brief new experiment" link into
+  Supercomputer's plan-builder (no new create-flow was built; this reuses the
+  existing agentic plan-builder rather than fabricating a form the data model
+  can't persist), and six stat tiles (Running, Planned, Won, Killed, Loonshots
+  live, Cross-brand patterns) — all derived, none fabricated.
+- **`ExperimentCard` gained a timeline/owner meta row** — "Launched {date}" once
+  launched, else "Briefed {date}" off `created_at`, plus an owner initials mark
+  (`OwnerMark` in `components/marks.tsx`, round where `BrandMark` is square).
+  Deliberately not a live "N days running" figure — that needs a moving "now"
+  reference, and `ExperimentCard` renders through a server-rendered path
+  (`ObservatoryView` is a client component, but Next still renders it on the
+  server for the initial HTML), so a `Date.now()`-based figure risks exactly the
+  hydration drift `AGENTS.md` already warns about for date formatting.
+
+**Watch:** the priority tree currently ignores brand and touchpoint as split
+variables — it only reads loop stage and risk category. Adding a third level
+(touchpoint) is a natural Pass F if the active register grows past what two
+levels can show cleanly; not needed yet at 20 seeded records.
 
 ---
 

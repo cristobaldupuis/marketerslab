@@ -264,6 +264,56 @@ by a few smaller, unrelated operations (a digital marketing agency, a content
 studio, a UK marketer community/newsletter) — none registered as trademarks for
 software, and the term is generic enough that this isn't a legal concern.
 
+## Observatory redesign: visual direction and nav regrouping
+
+Prompted by a set of reference screenshots (a denser, more conventional SaaS
+look — masthead bar, stat tiles, grouped sidebar, badge-heavy cards) that the
+founder wants the product to move toward. Three decisions worth recording so
+the next session doesn't read the "restraint, not a marketing dashboard" line
+in the Design system section above and assume the screenshots were rejected:
+
+- **The visual direction changed; the conventions didn't.** Observatory
+  gained a masthead (last-synced timestamp, a "Brief new experiment" link
+  into Supercomputer) and a stat-tile strip, and cards gained a
+  timeline/owner meta row — all read off real fields, nothing fabricated for
+  density's sake ("Cross-brand patterns" is `FAMILIES.length`; "Loonshots
+  live" is a real filter; there is no inverse for "confidence %" or "Q3
+  velocity" in the data model, so those reference-screenshot tiles were
+  dropped rather than faked). Colour stays rationed exactly as documented
+  above — the new stat tiles reuse existing semantic tokens (`live`, `won`,
+  `stopped`, `loonshot`) rather than introducing new ones, and violet stays
+  spent on the pre-registration stamp alone.
+- **The sidebar is now two labeled groups, not six flat rows.** *Signal*
+  (Observatory, Vivarium) is where you watch the register as it stands.
+  *Protocol* (Quarantine, Supercomputer) is where you do something to it —
+  clear a record to launch, or generate one. "Protocol" doubles deliberately
+  as the pre-registration term already used for kill criteria, the same kind
+  of double duty "Loops" already does for the loop-stage axis (see above).
+  Laboratory and Microscope are no longer listed in the sidebar at all —
+  Pass A (`ROADMAP.md`) originally shipped them as context-aware but
+  *disabled* rows ("Open a record first"); a row that's dead until you've
+  already navigated somewhere else isn't navigation, so they were removed
+  outright rather than kept disabled. Both stay fully reachable — every card
+  links into Microscope, and Microscope/Laboratory cross-link to each other
+  once you're on a record — the sidebar just isn't one of the paths in.
+- **The pipeline-priority tree (`components/priority-tree.tsx`) is a
+  second, unrelated tree, not a variant of the segment tree.** The segment
+  tree (`components/segment-tree.tsx`, `lib/segments.ts`) answers "why did
+  this concluded experiment move the way it did" from a `SegmentNode` of
+  effects and intervals. The priority tree answers "what should run next" by
+  grouping the *not-yet-concluded* register (`lib/priority.ts`) by loop stage
+  then risk category, so a stage with nothing in it, or a stage running only
+  franchise or only loonshot work, reads as a visible gap rather than
+  something you have to notice yourself — same "compute the prompt, don't
+  assert it" discipline as `findReversal`, applied to portfolio composition
+  instead of a single experiment's sub-populations. It reuses the segment
+  tree's connector CSS (`.tree-sub`/`.tree-cell`/`.tree-kids`/`.tree-branch`
+  in `app/globals.css`) so the two read as the same visual family, but the
+  node data shapes don't unify — a stage bucket has no effect or interval to
+  show, so forcing it through `SegmentNode` would mean fabricating one. Live
+  as a second view on Observatory (`Cards` / `Priority tree`, a
+  `SegmentedControl`), not a new route.
+
 ## Status
 
 This is a tinkering/exploration build, not a shipping product yet. Today/

@@ -33,6 +33,18 @@ export function formatCount(n: number): string {
   return n.toLocaleString("en-GB");
 }
 
+/** "Priya Raman" -> "PR" — same two-letter convention as the seeded
+ *  `Brand.initials` field, applied to `Experiment.owner` at read time since
+ *  owners aren't a standalone entity with their own record to carry it on. */
+export function initialsOf(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export function formatPercent(n: number): string {
   return `${(n * 100).toFixed(0)}%`;
 }
