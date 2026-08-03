@@ -12,6 +12,8 @@ import type { Experiment } from "../types";
 export const EXPERIMENTS: Experiment[] = [
   {
     id: "EXP-0112",
+    kill_criteria_template_id: "pdp-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "sundry",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -153,6 +155,8 @@ export const EXPERIMENTS: Experiment[] = [
     // against each other. The trees agree in one branch and disagree in the
     // other, which is the whole reason for running it here.
     id: "EXP-0116",
+    kill_criteria_template_id: "pdp-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -293,6 +297,8 @@ export const EXPERIMENTS: Experiment[] = [
     // work. Tagged franchise because the mechanic had already been proven twice
     // — and franchise criteria are exactly what stopped it on day 7.
     id: "EXP-0123",
+    kill_criteria_template_id: "pdp-franchise",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -430,6 +436,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0108",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Replenishment reminder timed to consumption, not calendar",
     hypothesis:
@@ -482,6 +490,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0121",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Cold-open recipe hook vs. product-first hook on paid social",
     hypothesis:
@@ -534,6 +544,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0097",
+    kill_criteria_template_id: "digital-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Podcast host-read as a standalone acquisition channel",
     hypothesis:
@@ -587,6 +599,9 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0130",
+    kill_criteria_template_id: "digital-loonshot",
+    kill_criteria_overridden: true,
+    kill_criteria_overrides: { max_runtime_days: 21 },
     brand_id: "sundry",
     title: "Slot-scarcity nudge in the pre-checkout reminder",
     hypothesis:
@@ -639,6 +654,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0089",
+    kill_criteria_template_id: "offline-franchise",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Recipe card insert in the delivery box",
     hypothesis:
@@ -692,6 +709,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0133",
+    kill_criteria_template_id: "pdp-franchise",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Subscription frequency picker above the fold on PDP",
     hypothesis:
@@ -738,6 +757,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0126",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Win-back discount ladder for lapsed subscribers",
     hypothesis:
@@ -791,6 +812,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0136",
+    kill_criteria_template_id: "offline-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "sundry",
     title: "Pickup lockers at two transit stations",
     hypothesis:
@@ -837,6 +860,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0118",
+    kill_criteria_template_id: "offline-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Refill pouch as the default pack format",
     hypothesis:
@@ -890,6 +915,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0103",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "sundry",
     title: "Category-led vs. offer-led creative on retail media",
     hypothesis:
@@ -975,6 +1002,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0139",
+    kill_criteria_template_id: "pdp-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Build-your-own box configurator replacing curated boxes",
     hypothesis:
@@ -1022,6 +1051,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0114",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Plain-text sender for the order confirmation",
     hypothesis:
@@ -1075,6 +1106,9 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0128",
+    kill_criteria_template_id: "pdp-franchise",
+    kill_criteria_overridden: true,
+    kill_criteria_overrides: { max_runtime_days: 35 },
     brand_id: "sundry",
     title: "Substitution preferences captured at basket, not at delivery",
     hypothesis:
@@ -1127,6 +1161,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0094",
+    kill_criteria_template_id: "digital-loonshot",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Connected TV as a top-of-funnel channel",
     hypothesis:
@@ -1180,6 +1216,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0141",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
     brand_id: "marlow-field",
     title: "Founder-voice static ads against studio product photography",
     hypothesis:
@@ -1226,6 +1264,9 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0143",
+    kill_criteria_template_id: "digital-loonshot",
+    kill_criteria_overridden: true,
+    kill_criteria_overrides: { max_runtime_days: 21 },
     brand_id: "sundry",
     title: "Weekly basket assembled from order history, ready to edit",
     hypothesis:
@@ -1272,6 +1313,8 @@ export const EXPERIMENTS: Experiment[] = [
 
   {
     id: "EXP-0145",
+    kill_criteria_template_id: "offline-franchise",
+    kill_criteria_overridden: false,
     brand_id: "ridgeline",
     title: "Farmers-market sampling as a local acquisition motion",
     hypothesis:

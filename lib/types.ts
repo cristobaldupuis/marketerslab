@@ -15,6 +15,14 @@ export type ExperimentStatus = "planned" | "running" | "complete" | "killed";
  *  experiment can still have been a genuine learning rather than a loss. */
 export type Outcome = "won" | "lost" | "flat" | "learning";
 
+/**
+ * Franchise vs. loonshot, reused as the second axis of the kill-criteria
+ * template matrix below. An alias, not a new taxonomy axis — the matrix reads
+ * `touchpoint` and `risk_class` off the same four-axis taxonomy every other
+ * record uses. See "Known constraint" in ROADMAP.md Pass B.
+ */
+export type RiskClass = RiskCategory;
+
 export interface Brand {
   id: string;
   name: string;
@@ -40,6 +48,30 @@ export interface KillCriteria {
   /** One line on how the rule resolved. Null while the test is still pre-checkpoint. */
   disposition_note: string | null;
 }
+
+/**
+ * A standardized kill-criteria template, keyed by touchpoint × risk class.
+ * Experiments inherit from a matrix cell by default rather than having
+ * criteria freely re-typed per record — see `lib/data/kill-criteria-templates.ts`.
+ * The matrix is not a full cross-product: cells may point at the same
+ * template where the underlying criteria genuinely don't differ.
+ */
+export interface KillCriteriaTemplate {
+  id: string;
+  touchpoint: Touchpoint;
+  risk_class: RiskClass;
+  min_sample_size: number;
+  min_runtime_days: number;
+  max_runtime_days: number;
+  /** e.g. "+5% vs control at 95% confidence". */
+  win_threshold: string;
+}
+
+/** The subset of a template's fields an experiment can override. */
+export type KillCriteriaFields = Pick<
+  KillCriteriaTemplate,
+  "min_sample_size" | "min_runtime_days" | "max_runtime_days" | "win_threshold"
+>;
 
 /**
  * The pre-registered statistical design. Numbers are fabricated but internally
@@ -92,6 +124,15 @@ export interface Experiment {
   summary: string;
   headline: HeadlineResult | null;
   kill_criteria: KillCriteria;
+  /** Which matrix cell this record's kill criteria are standardized against —
+   *  see `lib/data/kill-criteria-templates.ts`. */
+  kill_criteria_template_id: string;
+  /** True if any field below was consciously overridden rather than
+   *  inherited as-is. The confirm-step UI that sets this is Pass C
+   *  (ROADMAP.md) — for now this is seeded directly. */
+  kill_criteria_overridden: boolean;
+  /** Only present when `kill_criteria_overridden` is true. */
+  kill_criteria_overrides?: Partial<KillCriteriaFields>;
   design: ExperimentDesign;
   owner: string;
   created_at: string;
