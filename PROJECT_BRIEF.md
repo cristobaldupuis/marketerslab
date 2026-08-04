@@ -148,7 +148,11 @@ feature completeness.
 
 ## Explicitly out of scope for this build (see DECISIONS.md for reasoning)
 
-- Real API integrations with ad/CRM/analytics platforms
+- Real API integrations with ad/CRM/analytics platforms — **superseded.** Still out of
+  scope for the designathon window, but no longer a permanent no: this is now the Field
+  Station section, scoped in `CONTROL_ROOM_SCOPE.md` and sequenced as Pass F in
+  `ROADMAP.md`. Read-only forever; it never writes to a live ad account. See "Platform
+  integrations: the cut, reversed" in DECISIONS.md.
 - Real multi-tenancy/auth
 - Multi-model routing for cost optimization
 - CEO/CMO portfolio rollup dashboards
@@ -179,10 +183,19 @@ founder can react to before finalizing the actual designathon scope, timing, and
 polish pass. Build order should follow the priority list above, roughly two
 passes:
 
-- **Pass 1:** taxonomy, seeded dataset, rigor dial shell (no tree yet).
+- **Pass 1:** taxonomy, seeded dataset, rigor dial shell (no tree yet). *Done.*
 - **Pass 2:** decision tree visualization (its own session — data viz problem,
-  keep separate from agentic-feature work to avoid muddying context).
+  keep separate from agentic-feature work to avoid muddying context). *Done.*
 - **Pass 3:** agentic plan-builder + roadmap generator (LLM-call orchestration —
-  different problem type from Pass 2, deserves its own session).
+  different problem type from Pass 2, deserves its own session). *Done* — shipped
+  at `/supercomputer` with one server-side model call and a mandatory seeded
+  fallback; this is Pass D in `ROADMAP.md`.
 - **Pass 4:** cross-brand pattern view + case-study generator, once the tree and
-  agentic pieces both exist to draw from.
+  agentic pieces both exist to draw from. *Pattern view done; case-study
+  generator not started.*
+
+The original four-pass plan above is superseded as a sequencing document. Current
+ordering lives in [`ROADMAP.md`](./ROADMAP.md), which carries the section
+restructuring (Passes A–E) and what remains: Quarantine (Pass C), Field Station
+(Pass F, scoped in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md)), and the
+case-study generator.

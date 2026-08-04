@@ -19,12 +19,13 @@ npm run build && npm run start
 npm run lint
 ```
 
-Next.js 16 (App Router) · React 19 · Tailwind v4 · TypeScript. No database, no API calls, no
-auth. All data is a static TypeScript module.
+Next.js 16 (App Router) · React 19 · Tailwind v4 · TypeScript. No database, no auth. All
+register data is a static TypeScript module; the one outbound call is the Supercomputer's
+model call, and it degrades to a seeded fallback rather than an error.
 
 ## The information architecture: sections as places/tools of science
 
-The app is organized around six sections, each a metaphor for a place or instrument a
+The app is organized around seven sections, each a metaphor for a place or instrument a
 scientist would use at a different stage of running an experiment. Full definitions in
 [`DEFINITIONS.md`](./DEFINITIONS.md); this table is the build-status summary.
 
@@ -34,12 +35,14 @@ scientist would use at a different stage of running an experiment. Full definiti
 | **Laboratory** | The analysis workspace — where a record's design, evidence and cross-brand pattern are worked through | `/laboratory/[id]` (Experiment / Patterns tabs) | ✅ Built |
 | **Microscope** | Close inspection of one record — hypothesis, verdict, headline, nothing else in the frame | `/microscope/[id]` | ✅ Built |
 | **Vivarium** | Live specimens under observation — experiments currently running | `/vivarium` | ✅ Built |
+| **Field Station** | Read-only observation of live ad accounts — the outpost, reporting on a population it never touches | `/field-station` (planned) | ⏳ Not started (Pass F — see [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md)) |
 | **Quarantine** | Pre-register triage — an experiment held here until its kill criteria are confirmed | `/quarantine` (planned) | ⏳ Not started |
-| **Supercomputer** | AI/agentic tooling — plan-builder, roadmap generator | not yet routed | ⏳ Not started (deferred, Pass 3 in the original build plan) |
+| **Supercomputer** | AI/agentic tooling — plan-builder, roadmap generator | `/supercomputer` | ✅ Built |
 
 A persistent left sidebar lists the four sections you can land on directly, grouped as
 **Signal** (Observatory, Vivarium) and **Protocol** (Quarantine, Supercomputer). Quarantine
-appears disabled/"coming soon" until its pass lands. Laboratory and Microscope are real,
+appears disabled/"coming soon" until its pass lands; Field Station joins **Signal** once
+Pass F builds it. Laboratory and Microscope are real,
 built sections but aren't sidebar rows — both only resolve to a destination once a record
 is already in view, so they're reached from a card or from each other, not from the
 sidebar; see the note at the top of `DEFINITIONS.md`.
@@ -79,6 +82,15 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
     with brand as the root split. Disabled for records with no family.
 - **Vivarium (`/vivarium`)** — every experiment currently `status: "running"`, isolated
   from the rest of the register so "what's live right now" doesn't require a filter click.
+- **Supercomputer (`/supercomputer`)** — the plan-builder and roadmap generator behind one
+  mode switch, because they're one engine called at two points in the lifecycle. The
+  plan-builder takes industry/stage/budget/touchpoint and returns ranked, pre-registered
+  proposals; the roadmap generator reads a completed record's segment tree and proposes the
+  next test built on the lever that actually drove the result. One server-side model call
+  (`app/api/generate/route.ts`) with a mandatory seeded fallback in `lib/generate/fallback.ts`
+  — no key, rate limit or timeout can reach the client as an error state. `rigor_tier` and
+  `loop_stage` are derived, never model-set. A proposal is deliberately not a record: no id,
+  no brand, no dates, and nothing is written to the register.
 - **Segment decision tree** — `components/segment-tree.tsx`, used inside the Laboratory's
   Experiment tab and Patterns tab alike. Every node carries its effect and 95% interval as a
   forest-plot row on one shared scale; clicking a node gives its sub-population, split
@@ -113,10 +125,16 @@ See [`ROADMAP.md`](./ROADMAP.md) for the full sequencing. Short version:
 | --- | --- | --- |
 | Kill-criteria override confirm-step UI | Feeds Quarantine's triage flow | The data model (`lib/data/kill-criteria-templates.ts` + `Experiment` fields) is built; no UI reads it yet |
 | Quarantine triage view + graduation flow | Quarantine | New `app/quarantine/` route |
-| Agentic plan-builder and roadmap generator | Supercomputer | New `app/api/` route — nothing exists yet |
+| Connected ad accounts, flagging, and the draft-to-Quarantine hand-off | Field Station | New `lib/external/` module and `app/field-station/` route. `lib/types.ts` does not change. Scoped as Pass F in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md) |
 | Case-study generator | (unassigned — likely Laboratory or a new section) | Composes from a record plus its tree. Deterministic composition is preferred over a model call here — it cannot hallucinate a number that contradicts the tree beside it. |
 
-Also out of scope by design: real auth, real multi-tenancy, real platform integrations.
+Also out of scope by design: real auth and real multi-tenancy. Real platform integrations
+were cut too, and that call is now **reversed** — read-only Meta and Google Ads reads are the
+Field Station section (Pass F). Read-only permanently: nothing in this product will write to
+a live ad account. The reasoning is in "Platform integrations: the cut, reversed" in
+[`DECISIONS.md`](./DECISIONS.md), and the full scope — schema, engine seam, the OAuth
+infrastructure gap, and the single write path — is in
+[`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md).
 
 ## Design system
 
