@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { criteriaFit, disagreements, inheritedCriteria, movedFields } from "@/lib/criteria";
 import { BRAND_BY_ID } from "@/lib/data/brands";
 import { daysBetween, formatCount, formatDate, formatEffect, formatPercent } from "@/lib/format";
 import { eligibleForRoadmap } from "@/lib/generate/facts";
@@ -312,6 +313,102 @@ function KillCriteriaBlock({ experiment: e }: { experiment: Experiment }) {
           )}
         </>
       )}
+
+      <StandardFit experiment={e} />
+    </div>
+  );
+}
+
+/**
+ * The prose rule above is what this team committed to. This is the separate
+ * question of whether the design also sits inside the standardized criteria for
+ * its touchpoint × risk cell — which nothing checked until now, because Pass B
+ * assigned the cells to records that were already written and Pass C only ran
+ * the check inside Quarantine, on records that had not been cleared yet.
+ *
+ * A disagreement is stated, not scored. Several are real history rather than
+ * mistakes — `EXP-0123` was stopped at day 7 against a 10-day minimum, and that
+ * is the record of a franchise rule doing its job, not a defect to hide.
+ */
+function StandardFit({ experiment: e }: { experiment: Experiment }) {
+  const fit = criteriaFit(e);
+  const inherited = inheritedCriteria(e);
+  const moved = movedFields(inherited, fit.criteria);
+  const problems = disagreements(fit);
+
+  return (
+    <div className="border-t border-rule px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
+        <p className="field-label">Against the standard for this cell</p>
+        <p className="font-mono text-[10.5px] text-ink-4">
+          {fit.template.id}
+          {moved.length > 0 && " · overridden"}
+        </p>
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-5 gap-y-2.5 sm:grid-cols-4">
+        <StandardField
+          label="Minimum sample"
+          value={`${formatCount(fit.criteria.min_sample_size)} / arm`}
+          moved={moved.includes("min_sample_size")}
+        />
+        <StandardField
+          label="Minimum runtime"
+          value={`${fit.criteria.min_runtime_days} days`}
+          moved={moved.includes("min_runtime_days")}
+        />
+        <StandardField
+          label="Maximum runtime"
+          value={`${fit.criteria.max_runtime_days} days`}
+          moved={moved.includes("max_runtime_days")}
+        />
+        <StandardField
+          label="Win threshold"
+          value={fit.criteria.win_threshold}
+          moved={moved.includes("win_threshold")}
+        />
+      </dl>
+
+      {fit.findings.length === 0 ? (
+        <p className="mt-3.5 max-w-[70ch] border-t border-rule pt-3 text-[13px] leading-[1.55] text-ink-2">
+          The design sits inside these criteria on every check.
+        </p>
+      ) : (
+        <ul className="mt-3.5 space-y-1.5 border-t border-rule pt-3">
+          {fit.findings.map((f) => (
+            <li
+              key={f.note}
+              className={`flex max-w-[70ch] gap-2.5 text-[13px] leading-[1.55] ${
+                f.kind === "floor_not_applicable" ? "text-ink-3" : "text-ink-2"
+              }`}
+            >
+              <span aria-hidden className="mt-[6px] size-[3px] shrink-0 rounded-full bg-ink-4" />
+              {f.note}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {problems.length > 0 && (
+        <p className="mt-3 max-w-[70ch] text-[12.5px] leading-[1.55] text-ink-3">
+          The cells were assigned across the register after these records were written, so a
+          disagreement here is a reconciliation nobody has done yet — not a rule that was broken.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StandardField({ label, value, moved }: { label: string; value: string; moved: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="field-label truncate">{label}</dt>
+      <dd className="mt-1 text-[13px] leading-snug text-ink">
+        {value}
+        {moved && (
+          <span className="ml-1.5 font-mono text-[9.5px] tracking-[0.08em] text-ink-4 uppercase">moved</span>
+        )}
+      </dd>
     </div>
   );
 }

@@ -65,6 +65,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: 21,
       allocation: "50/50, randomised at household level, sticky across sessions",
+      randomisation_unit: "household",
       guardrails: [
         "Average basket value",
         "Delivery slot utilisation",
@@ -209,6 +210,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: 21,
       allocation: "50/50, randomised at household level, sticky across sessions",
+      randomisation_unit: "household",
       guardrails: [
         "Average basket value",
         "Subscription cancellations",
@@ -352,6 +354,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: 7,
       allocation: "50/50, randomised at household level, sticky across sessions",
+      randomisation_unit: "household",
       guardrails: [
         "Average basket value",
         "First-order conversion",
@@ -491,6 +494,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 42,
       actual_runtime_days: 42,
       allocation: "50/50, randomised at household level",
+      randomisation_unit: "household",
       guardrails: ["Unsubscribe rate", "Spam complaint rate", "Average order value", "Subscription cancellations"],
       design_note:
         "Two full send cycles rather than one, so the result is not an artefact of a single week's inventory or promo calendar.",
@@ -546,6 +550,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 14,
       actual_runtime_days: null,
       allocation: "50/50 budget split, prospecting audiences only, retargeting excluded",
+      randomisation_unit: "budget",
       guardrails: ["Three-second hold rate", "Frequency", "Blended CAC across all campaigns"],
       design_note:
         "Light tier on purpose. This is a creative variant on a proven format — a full pre-registration would cost more than the decision is worth.",
@@ -602,6 +607,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 60,
       actual_runtime_days: 30,
       allocation: "Incremental budget, not diverted — control is the existing channel at its normal spend",
+      randomisation_unit: "budget",
       guardrails: ["Blended CAC", "Promo-code redemption rate", "Direct-traffic lift during flight windows"],
       design_note:
         "Alpha loosened to 0.10 and the runway doubled to 60 days, because this is a loonshot with no prior. Franchise criteria would have stopped it at day 10, before the second show's flight had even started — and we would have learned nothing.",
@@ -618,7 +624,10 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0130",
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: true,
-    kill_criteria_overrides: { max_runtime_days: 21 },
+    /* Tighter than the 35-day loonshot standard because the tier is standard,
+       not deep — but set to the runtime this test actually plans. Pass B seeded
+       21 here, which the 28-day design contradicted from day one. */
+    kill_criteria_overrides: { max_runtime_days: 28 },
     kill_criteria_confirmed_at: "2026-07-13",
     brand_id: "sundry",
     title: "Slot-scarcity nudge in the pre-checkout reminder",
@@ -658,6 +667,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 28,
       actual_runtime_days: null,
       allocation: "50/50, randomised at household level",
+      randomisation_unit: "household",
       guardrails: ["Average basket value", "Slot cancellation rate", "Delivery cost per order", "Unsubscribe rate"],
       design_note:
         "Standard rather than deep tier: novel mechanic, but the downside is bounded and reversible within a day, so the full pre-registration overhead is not warranted.",
@@ -714,6 +724,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 28,
       actual_runtime_days: 28,
       allocation: "Alternating fulfilment batches, randomised at household level",
+      randomisation_unit: "household",
       guardrails: ["Pick error rate", "Packaging cost per box"],
       design_note:
         "Underpowered for anything smaller than a 6% relative move, and deliberately so — an effect below that does not clear the insert's own cost, so detecting it would not change the decision.",
@@ -763,6 +774,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: null,
       allocation: "50/50, randomised at visitor level",
+      randomisation_unit: "visitor",
       guardrails: ["Add-to-cart rate", "One-time purchase conversion", "Subscription cancellation within 60 days"],
       design_note:
         "Guardrail on one-time conversion matters more than the primary metric here — a subscription lift bought by cannibalising one-time purchases is not a win.",
@@ -819,6 +831,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 28,
       actual_runtime_days: 14,
       allocation: "50/50, randomised at household level within the lapsed segment",
+      randomisation_unit: "household",
       guardrails: ["Contribution margin per recovered household", "Discount depth", "Full-price reorder within 90 days"],
       design_note:
         "The primary metric was never the real question. Reactivation at any price is easy; the guardrail is what the experiment was actually about.",
@@ -868,6 +881,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 90,
       actual_runtime_days: null,
       allocation: "Geographic — matched station catchments",
+      randomisation_unit: "geo",
       guardrails: ["Cost per fulfilled order", "Spoilage rate", "Cannibalisation of existing delivery orders"],
       design_note:
         "Loonshot with real capital exposure, so the runway is long and the read is geographic rather than randomised. Design is not final and should not be treated as registered.",
@@ -924,6 +938,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 120,
       actual_runtime_days: null,
       allocation: "50/50, randomised at household level, locked for the full cohort window",
+      randomisation_unit: "household",
       guardrails: ["First-order revenue", "30-day reorder rate", "Complaint volume per shipment", "Packaging cost per unit"],
       design_note:
         "Power raised to 0.85 and the runway set at 120 days because the primary metric is a lagging one and the format change is expensive to reverse. The kill rule deliberately excludes first-order revenue — writing that exclusion down before launch is what stops the test being killed in week two on a metric we already knew would fall.",
@@ -979,6 +994,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 30,
       actual_runtime_days: 30,
       allocation: "50/50 budget split across two retail media networks",
+      randomisation_unit: "budget",
       guardrails: ["First-order CAC", "Impression share", "Basket size on first order"],
       design_note:
         "Runtime set by the 45-day second-order window, not by the acquisition volume — the primary metric needed the cohort to mature before anything could be read.",
@@ -1062,6 +1078,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 60,
       actual_runtime_days: null,
       allocation: "50/50, randomised at visitor level, held for the full retention window",
+      randomisation_unit: "visitor",
       guardrails: ["Pick-and-pack cost per box", "Low-turn SKU coverage", "90-day retention", "Time to first box"],
       design_note:
         "Alpha at 0.10 and a 60-day runway because this is a loonshot against a working franchise. The operational guardrails are the real decision criteria; conversion is the headline, not the constraint.",
@@ -1118,6 +1135,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: 11,
       allocation: "50/50, randomised at order level",
+      randomisation_unit: "order",
       guardrails: ["Open rate", "Support contact rate", "Unsubscribe rate"],
       design_note:
         "Open rate was deliberately registered as a guardrail rather than the primary metric, so that a rise there could not be used to argue the test into a win.",
@@ -1174,6 +1192,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 35,
       actual_runtime_days: null,
       allocation: "50/50, randomised at household level",
+      randomisation_unit: "household",
       guardrails: ["Basket abandonment", "Time to complete basket", "Contact rate to support", "Picker exception rate"],
       design_note:
         "Deep tier on a franchise test, deliberately. The change is incremental but it sits on the refund line, and refunds are the single largest controllable drag on margin — so this one earns the full pre-registration.",
@@ -1230,6 +1249,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 42,
       actual_runtime_days: 28,
       allocation: "Geographic. Metro pairs matched on population, prior revenue and seasonality, and locked before launch",
+      randomisation_unit: "geo",
       guardrails: ["Blended CAC across all channels", "Cost per incremental session", "Spend pacing"],
       design_note:
         "Sample size here is metros, not households — four pairs, which is thin, and that limit was written down before the flight rather than discovered afterwards. Alpha at 0.10 for the same reason as any loonshot: the alternative is never testing brand channels at all.",
@@ -1279,6 +1299,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 14,
       actual_runtime_days: null,
       allocation: "50/50 budget split, prospecting only",
+      randomisation_unit: "budget",
       guardrails: ["Creative fatigue curve", "Frequency", "Thumb-stop rate"],
       design_note:
         "Light tier. The real question is creative lifespan, which needs a longer read than this test gives — this one only establishes that the format does not cost us anything up front.",
@@ -1295,7 +1316,11 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0143",
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: true,
-    kill_criteria_overrides: { max_runtime_days: 21 },
+    /* An override upward, and the clearest case for one in the register: the
+       primary metric is orders per household per *month*, so a 35-day standard
+       runway cannot read it at all. Pass B seeded a cut to 21 days against a
+       42-day design, which was the override pointing the wrong way. */
+    kill_criteria_overrides: { max_runtime_days: 42 },
     kill_criteria_confirmed_at: "2026-07-27",
     brand_id: "sundry",
     title: "Weekly basket assembled from order history, ready to edit",
@@ -1329,6 +1354,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 42,
       actual_runtime_days: null,
       allocation: "50/50, randomised at household level, limited to households with 4+ prior orders",
+      randomisation_unit: "household",
       guardrails: ["Average basket value", "First-time SKU rate", "Time to checkout", "Substitution rate"],
       design_note:
         "Restricted to households with at least four prior orders, because the mechanic has nothing to assemble from below that and including them would dilute the effect toward zero.",
@@ -1378,6 +1404,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 56,
       actual_runtime_days: null,
       allocation: "Catchment-level, matched postcodes",
+      randomisation_unit: "geo",
       guardrails: ["Cost per sample served", "Redemption rate on market-issued codes", "Staffing cost per market day"],
       design_note:
         "Franchise-tagged because sampling is a known motion with published benchmarks — this is a question of whether it works for us, not whether it works at all.",
@@ -1440,6 +1467,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 21,
       actual_runtime_days: null,
       allocation: "50/50 at campaign level, matched budgets and placements",
+      randomisation_unit: "budget",
       guardrails: ["Blended CAC across the account", "Thumb-stop rate", "Return rate on first order"],
       design_note:
         "Powered off the studio baseline rather than a category benchmark, so the comparison is against what we actually run today. The 21-day cap was chosen to fit a creator contract, not from the risk category — which is exactly the tension Quarantine is holding this record for.",
@@ -1490,6 +1518,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 14,
       actual_runtime_days: null,
       allocation: "50/50, randomised at household level across the delivery cohort",
+      randomisation_unit: "household",
       guardrails: ["Review volume from email three", "Unsubscribe rate", "Support contact rate"],
       design_note:
         "Sized at 7,400 per arm, comfortably over the 6,000 floor the digital franchise cell asks for, and the two-week window sits inside its 7-to-14 day runway. The standard fits this test without adjustment.",
@@ -1540,6 +1569,7 @@ export const EXPERIMENTS: Experiment[] = [
       planned_runtime_days: 35,
       actual_runtime_days: null,
       allocation: "Randomised at household level within four matched delivery catchments",
+      randomisation_unit: "household",
       guardrails: ["Total order volume", "Average basket value", "Slot cancellation rate"],
       design_note:
         "Constrained by geography, not by budget: slot pricing only varies in four catchments, and those catchments hold roughly 14,200 households per arm over the window. Running to the standard 25,000 floor would mean waiting for population that does not exist.",

@@ -74,6 +74,21 @@ export type KillCriteriaFields = Pick<
 >;
 
 /**
+ * What a test was actually randomised on. `ExperimentDesign.allocation` already
+ * says this in prose; this is the machine-readable half of the same fact, and it
+ * exists because it decides whether a template's `min_sample_size` floor is even
+ * applicable. A geo-split or budget-split test does not accrue a user-level
+ * sample — `EXP-0094` is powered on four matched metro pairs — so comparing its
+ * `sample_per_arm` against a 12,000-household floor compares two different
+ * things. See `lib/criteria.ts`.
+ *
+ * Not a taxonomy axis, and not on `Experiment`: it describes the statistical
+ * design, sitting alongside `power` and `alpha`, and nothing browses or groups
+ * by it.
+ */
+export type RandomisationUnit = "household" | "visitor" | "order" | "geo" | "budget";
+
+/**
  * The pre-registered statistical design. Numbers are fabricated but internally
  * consistent — MDE, baseline and sample size are in the right relationship to
  * each other so the deep view reads as real work rather than lorem ipsum.
@@ -93,6 +108,8 @@ export interface ExperimentDesign {
   planned_runtime_days: number;
   actual_runtime_days: number | null;
   allocation: string;
+  /** The unit `allocation` describes, as an enum. See `RandomisationUnit`. */
+  randomisation_unit: RandomisationUnit;
   guardrails: string[];
   /** One sentence explaining why the design was sized the way it was. */
   design_note: string;

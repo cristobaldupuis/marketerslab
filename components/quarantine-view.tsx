@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BRAND_BY_ID } from "@/lib/data/brands";
+import { criteriaFit, inheritedCriteria, movedFields, templateOf } from "@/lib/criteria";
 import { formatCount, formatDate } from "@/lib/format";
 import {
   confirmCriteria,
-  inheritedCriteria,
-  template,
   useRegister,
   type Confirmations,
   type CriteriaConfirmation,
@@ -124,12 +123,6 @@ const FIELD_LABEL: Record<keyof KillCriteriaFields, string> = {
 
 const NUMERIC_FIELDS = ["min_sample_size", "min_runtime_days", "max_runtime_days"] as const;
 
-function changedFields(inherited: KillCriteriaFields, draft: KillCriteriaFields): (keyof KillCriteriaFields)[] {
-  return (Object.keys(inherited) as (keyof KillCriteriaFields)[]).filter(
-    (key) => inherited[key] !== draft[key],
-  );
-}
-
 /** Deterministic, locale-free, and only ever called from a click handler — so
  *  no clock reaches a render pass. Same rule as `lib/format.ts`. */
 function today(): string {
@@ -138,13 +131,13 @@ function today(): string {
 
 function HeldRecord({ experiment: e }: { experiment: Experiment }) {
   const brand = BRAND_BY_ID[e.brand_id];
-  const cell = template(e);
+  const cell = templateOf(e);
   const inherited = inheritedCriteria(e);
 
   const [draft, setDraft] = useState<KillCriteriaFields>(inherited);
   const [acknowledged, setAcknowledged] = useState(false);
 
-  const changed = changedFields(inherited, draft);
+  const changed = movedFields(inherited, draft);
   const overridden = changed.length > 0;
   const blocked = overridden && !acknowledged;
 
@@ -299,50 +292,36 @@ function HeldRecord({ experiment: e }: { experiment: Experiment }) {
 }
 
 /**
- * The register's own numbers read against the criteria being confirmed. This is
- * why a checkpoint is worth having: EXP-0151 is sized at 14,200 per arm against
- * a 25,000 floor, and that disagreement should be visible at the moment of the
- * decision rather than discovered at the interim read. Computed, never tagged —
- * same discipline as `lib/priority.ts`'s prompts.
+ * The record's own design read against the criteria being confirmed, live as
+ * they are edited. This is why a checkpoint is worth having: EXP-0151 is sized
+ * at 14,200 households per arm against a 25,000 floor, and that disagreement
+ * belongs at the moment of the decision rather than at the interim read. The
+ * check itself lives in `lib/criteria.ts` — the Laboratory runs the same one
+ * over records that are already in the register.
  */
 function DesignFit({ experiment: e, draft }: { experiment: Experiment; draft: KillCriteriaFields }) {
-  const notes: string[] = [];
-  const planned = e.design.sample_per_arm;
-
-  if (planned > 0 && planned < draft.min_sample_size) {
-    notes.push(
-      `The design is powered for ${formatCount(planned)} per arm, under the ${formatCount(
-        draft.min_sample_size,
-      )} floor being confirmed.`,
-    );
-  }
-  if (e.design.planned_runtime_days > draft.max_runtime_days) {
-    notes.push(
-      `Planned runtime is ${e.design.planned_runtime_days} days, past the ${draft.max_runtime_days}-day maximum.`,
-    );
-  }
-  if (e.design.planned_runtime_days > 0 && e.design.planned_runtime_days < draft.min_runtime_days) {
-    notes.push(
-      `Planned runtime is ${e.design.planned_runtime_days} days, short of the ${draft.min_runtime_days}-day minimum.`,
-    );
-  }
-
+  const fit = criteriaFit(e, draft);
   const stamp = e.kill_criteria.registered_at;
 
   return (
     <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
       <div className="min-w-0 flex-1">
         <p className="field-label">Against the design on this record</p>
-        {notes.length === 0 ? (
+        {fit.findings.length === 0 ? (
           <p className="mt-2 max-w-[70ch] text-[13.5px] leading-[1.55] text-ink-2">
             The design as briefed sits inside these criteria. Nothing here needs a deviation.
           </p>
         ) : (
           <ul className="mt-2 space-y-1.5">
-            {notes.map((note) => (
-              <li key={note} className="flex max-w-[70ch] gap-2.5 text-[13.5px] leading-[1.55] text-ink">
+            {fit.findings.map((f) => (
+              <li
+                key={f.note}
+                className={`flex max-w-[70ch] gap-2.5 text-[13.5px] leading-[1.55] ${
+                  f.kind === "floor_not_applicable" ? "text-ink-2" : "text-ink"
+                }`}
+              >
                 <span aria-hidden className="mt-[7px] size-[3px] shrink-0 rounded-full bg-ink-4" />
-                {note}
+                {f.note}
               </li>
             ))}
           </ul>

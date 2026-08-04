@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { EXPERIMENTS } from "./data/experiments";
-import { templateFor } from "./data/kill-criteria-templates";
-import type { Experiment, KillCriteriaFields, KillCriteriaTemplate } from "./types";
+import type { Experiment, KillCriteriaFields } from "./types";
 
 /**
  * Quarantine — the pre-register holding state, and the session store behind its
@@ -71,21 +70,6 @@ function getServerSnapshot(): Confirmations {
 export function confirmCriteria(id: string, confirmation: CriteriaConfirmation): void {
   confirmations = Object.freeze({ ...confirmations, [id]: confirmation });
   for (const listener of listeners) listener();
-}
-
-/** The criteria a record inherits from its matrix cell, before any edit. */
-export function inheritedCriteria(e: Experiment): KillCriteriaFields {
-  const t = template(e);
-  return {
-    min_sample_size: t.min_sample_size,
-    min_runtime_days: t.min_runtime_days,
-    max_runtime_days: t.max_runtime_days,
-    win_threshold: t.win_threshold,
-  };
-}
-
-export function template(e: Experiment): KillCriteriaTemplate {
-  return templateFor(e.touchpoint, e.risk_category);
 }
 
 /** Held while its criteria are unconfirmed — on the record, or in this session. */
