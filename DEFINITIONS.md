@@ -124,10 +124,20 @@ inherited criteria from its Touchpoint × Risk-class template, or consciously ov
 them. Once confirmed, it graduates into the normal register flow (Planned/Running/etc.) and
 becomes visible in the Observatory.
 
-**Route:** `/quarantine` (planned)
+"Not a filter" is load-bearing and is enforced rather than asserted: a held record is
+**absent** from the Observatory's grid, its six stat tiles, the priority tree and the
+sidebar's record count, so this section is the only place it can be read at all. The state
+is one field on the record — `kill_criteria_confirmed_at`, null until a person has accepted
+or overridden the inherited criteria. That is workflow state, not a fifth taxonomy axis;
+see ROADMAP.md Pass C for the argument, and note that a held record has by construction
+never launched, since criteria precede launch.
 
-**Status:** Not started. Depends on the kill-criteria template data model — see
-[`ROADMAP.md`](./ROADMAP.md) Pass B and Pass C.
+**Route:** `/quarantine`
+
+**Status:** Built (Pass C). Confirming clears a record for the browser session only — there
+is no persistence layer, so a reload restores the holding queue, and the page says so rather
+than implying a write. It is also the landing pad for Field Station's one write path — see
+[`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md) §5.
 
 ---
 

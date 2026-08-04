@@ -8,12 +8,24 @@ import type { Experiment } from "../types";
  *
  * `segment_tree` is seeded for the experiments that will anchor the Pass 2
  * decision-tree view. Nothing in Pass 1 renders it.
+ *
+ * `kill_criteria_confirmed_at` (Pass C) is the Quarantine gate. Records that
+ * carry a date are in the register; the five that carry null are held in
+ * Quarantine and do not appear in the Observatory, the priority tree or the
+ * sidebar's record count until someone clears them. Backfilled from each
+ * record's `kill_criteria.registered_at`, since locking the rule and settling
+ * the template relationship were the same act for everything seeded before
+ * templates existed — except EXP-0146, which is deliberately the one record
+ * where the two come apart. Every held record has `launched_at: null`, which
+ * the AGENTS.md invariant requires: criteria precede launch, so a record whose
+ * criteria are unconfirmed cannot have launched.
  */
 export const EXPERIMENTS: Experiment[] = [
   {
     id: "EXP-0112",
     kill_criteria_template_id: "pdp-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-05-04",
     brand_id: "sundry",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -157,6 +169,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0116",
     kill_criteria_template_id: "pdp-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-06-08",
     brand_id: "marlow-field",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -299,6 +312,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0123",
     kill_criteria_template_id: "pdp-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-06-22",
     brand_id: "ridgeline",
     title: "Free-delivery threshold vs. flat basket discount at checkout",
     hypothesis:
@@ -438,6 +452,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0108",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-03-09",
     brand_id: "marlow-field",
     title: "Replenishment reminder timed to consumption, not calendar",
     hypothesis:
@@ -492,6 +507,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0121",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-07-21",
     brand_id: "ridgeline",
     title: "Cold-open recipe hook vs. product-first hook on paid social",
     hypothesis:
@@ -546,6 +562,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0097",
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-01-19",
     brand_id: "marlow-field",
     title: "Podcast host-read as a standalone acquisition channel",
     hypothesis:
@@ -602,6 +619,7 @@ export const EXPERIMENTS: Experiment[] = [
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: true,
     kill_criteria_overrides: { max_runtime_days: 21 },
+    kill_criteria_confirmed_at: "2026-07-13",
     brand_id: "sundry",
     title: "Slot-scarcity nudge in the pre-checkout reminder",
     hypothesis:
@@ -656,6 +674,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0089",
     kill_criteria_template_id: "offline-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2025-11-24",
     brand_id: "ridgeline",
     title: "Recipe card insert in the delivery box",
     hypothesis:
@@ -711,6 +730,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0133",
     kill_criteria_template_id: "pdp-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-07-28",
     brand_id: "marlow-field",
     title: "Subscription frequency picker above the fold on PDP",
     hypothesis:
@@ -759,6 +779,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0126",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-05-26",
     brand_id: "ridgeline",
     title: "Win-back discount ladder for lapsed subscribers",
     hypothesis:
@@ -814,6 +835,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0136",
     kill_criteria_template_id: "offline-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: null,
     brand_id: "sundry",
     title: "Pickup lockers at two transit stations",
     hypothesis:
@@ -862,6 +884,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0118",
     kill_criteria_template_id: "offline-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-06-01",
     brand_id: "marlow-field",
     title: "Refill pouch as the default pack format",
     hypothesis:
@@ -917,6 +940,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0103",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-02-16",
     brand_id: "sundry",
     title: "Category-led vs. offer-led creative on retail media",
     hypothesis:
@@ -1004,6 +1028,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0139",
     kill_criteria_template_id: "pdp-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-07-30",
     brand_id: "ridgeline",
     title: "Build-your-own box configurator replacing curated boxes",
     hypothesis:
@@ -1053,6 +1078,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0114",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-04-06",
     brand_id: "marlow-field",
     title: "Plain-text sender for the order confirmation",
     hypothesis:
@@ -1109,6 +1135,7 @@ export const EXPERIMENTS: Experiment[] = [
     kill_criteria_template_id: "pdp-franchise",
     kill_criteria_overridden: true,
     kill_criteria_overrides: { max_runtime_days: 35 },
+    kill_criteria_confirmed_at: "2026-06-29",
     brand_id: "sundry",
     title: "Substitution preferences captured at basket, not at delivery",
     hypothesis:
@@ -1163,6 +1190,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0094",
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2025-09-15",
     brand_id: "ridgeline",
     title: "Connected TV as a top-of-funnel channel",
     hypothesis:
@@ -1218,6 +1246,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0141",
     kill_criteria_template_id: "digital-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: "2026-07-24",
     brand_id: "marlow-field",
     title: "Founder-voice static ads against studio product photography",
     hypothesis:
@@ -1267,6 +1296,7 @@ export const EXPERIMENTS: Experiment[] = [
     kill_criteria_template_id: "digital-loonshot",
     kill_criteria_overridden: true,
     kill_criteria_overrides: { max_runtime_days: 21 },
+    kill_criteria_confirmed_at: "2026-07-27",
     brand_id: "sundry",
     title: "Weekly basket assembled from order history, ready to edit",
     hypothesis:
@@ -1315,6 +1345,7 @@ export const EXPERIMENTS: Experiment[] = [
     id: "EXP-0145",
     kill_criteria_template_id: "offline-franchise",
     kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: null,
     brand_id: "ridgeline",
     title: "Farmers-market sampling as a local acquisition motion",
     hypothesis:
@@ -1354,6 +1385,168 @@ export const EXPERIMENTS: Experiment[] = [
     owner: "Marcus Oyelaran",
     created_at: "2026-07-29",
     updated_at: "2026-08-01",
+    launched_at: null,
+    concluded_at: null,
+    segment_tree: null,
+  },
+
+  /* ---- Held in Quarantine (Pass C) --------------------------------------
+     Three records seeded so the confirm step has something to be about. The
+     other two held records (EXP-0136, EXP-0145) were already unregistered at
+     ideate stage and needed no new data — they became Quarantine's simplest
+     case rather than being written for it.                                  */
+
+  {
+    id: "EXP-0146",
+    kill_criteria_template_id: "digital-loonshot",
+    kill_criteria_overridden: false,
+    /* The record that proves confirmation and pre-registration are two
+       different commitments. A human locked this rule by hand on 16 July,
+       before templates were part of the process — so `registered_at` is set
+       while the template relationship has never been reconciled. The rule
+       stops at 4,000 per arm on day 21; the inherited digital-loonshot cell
+       wants 12,000 and up to 35 days. Somebody has to decide which stands. */
+    kill_criteria_confirmed_at: null,
+    brand_id: "ridgeline",
+    title: "Creator-led unboxing as a paid-social format",
+    hypothesis:
+      "Frozen protein loses on paid social because studio product photography cannot show what arrives at the door. A creator opening the box on camera should carry the cold-chain reassurance the static ads cannot, and acquire at a CAC below the studio-photography baseline.",
+    touchpoint: "paid_media",
+    loop_stage: "brief",
+    risk_category: "loonshot",
+    rigor_tier: "deep",
+    status: "planned",
+    verdict: null,
+    outcome: null,
+    summary:
+      "Rule was pre-registered in July, before the criteria matrix existed. Its sample floor and runway both sit under the loonshot standard for this cell — held until someone reconciles the two.",
+    headline: null,
+    kill_criteria: {
+      rule: "Stop at day 21 if cost per acquisition in the creator arm is more than 15% above the studio-photography baseline, once 4,000 households per arm have been reached.",
+      registered_at: "2026-07-16",
+      checkpoint: "Day-21 read, or 4,000 per arm — whichever lands first",
+      disposition: "not_yet_evaluated",
+      disposition_note: null,
+    },
+    design: {
+      primary_metric: "Cost per acquisition, 7-day click attribution",
+      baseline: "$48.10 on studio product photography",
+      mde: "12% relative",
+      power: 0.8,
+      alpha: 0.05,
+      sample_per_arm: 6400,
+      collected_per_arm: null,
+      arms: ["Control — studio product photography", "Treatment — creator-led unboxing"],
+      planned_runtime_days: 21,
+      actual_runtime_days: null,
+      allocation: "50/50 at campaign level, matched budgets and placements",
+      guardrails: ["Blended CAC across the account", "Thumb-stop rate", "Return rate on first order"],
+      design_note:
+        "Powered off the studio baseline rather than a category benchmark, so the comparison is against what we actually run today. The 21-day cap was chosen to fit a creator contract, not from the risk category — which is exactly the tension Quarantine is holding this record for.",
+    },
+    owner: "Marcus Oyelaran",
+    created_at: "2026-07-13",
+    updated_at: "2026-07-30",
+    launched_at: null,
+    concluded_at: null,
+    segment_tree: null,
+  },
+
+  {
+    id: "EXP-0149",
+    kill_criteria_template_id: "digital-franchise",
+    kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: null,
+    brand_id: "marlow-field",
+    title: "One-question survey in the second post-delivery email",
+    hypothesis:
+      "Households who never respond to the review request would answer a single question. Replacing the review ask in email two with one tappable question should raise response rate without costing the review volume email three depends on.",
+    touchpoint: "crm",
+    loop_stage: "brief",
+    risk_category: "franchise",
+    rigor_tier: "light",
+    status: "planned",
+    verdict: null,
+    outcome: null,
+    summary:
+      "Design is locked and the inherited criteria fit it as they stand. Waiting on someone to accept them — nothing about this record argues with the CRM franchise standard.",
+    headline: null,
+    kill_criteria: {
+      rule: "Not yet registered. The criteria inherited from the CRM × franchise cell are on the record and waiting on a decision — the stamp lands when they are accepted or overridden.",
+      registered_at: "",
+      checkpoint: "Registers when the criteria are confirmed",
+      disposition: "not_yet_evaluated",
+      disposition_note: null,
+    },
+    design: {
+      primary_metric: "Response rate on the second post-delivery email",
+      baseline: "4.9%",
+      mde: "9% relative",
+      power: 0.8,
+      alpha: 0.1,
+      sample_per_arm: 7400,
+      collected_per_arm: null,
+      arms: ["Control — review request", "Treatment — one tappable question"],
+      planned_runtime_days: 14,
+      actual_runtime_days: null,
+      allocation: "50/50, randomised at household level across the delivery cohort",
+      guardrails: ["Review volume from email three", "Unsubscribe rate", "Support contact rate"],
+      design_note:
+        "Sized at 7,400 per arm, comfortably over the 6,000 floor the digital franchise cell asks for, and the two-week window sits inside its 7-to-14 day runway. The standard fits this test without adjustment.",
+    },
+    owner: "Dana Whitfield",
+    created_at: "2026-07-27",
+    updated_at: "2026-08-02",
+    launched_at: null,
+    concluded_at: null,
+    segment_tree: null,
+  },
+
+  {
+    id: "EXP-0151",
+    kill_criteria_template_id: "pdp-loonshot",
+    kill_criteria_overridden: false,
+    kill_criteria_confirmed_at: null,
+    brand_id: "sundry",
+    title: "Delivery-slot pricing shown as a trade-off at basket",
+    hypothesis:
+      "Households treat the delivery slot as a fixed cost decided at checkout. Showing the price difference between slots while the basket is still being built should move demand into under-used slots without suppressing order volume.",
+    touchpoint: "pdp",
+    loop_stage: "brief",
+    risk_category: "loonshot",
+    rigor_tier: "deep",
+    status: "planned",
+    verdict: null,
+    outcome: null,
+    summary:
+      "The inherited PDP loonshot sample floor is 25,000 per arm. The four catchments this can run in hold about 14,000. Held until someone either finds more population or consciously overrides the floor.",
+    headline: null,
+    kill_criteria: {
+      rule: "Not yet registered. The criteria inherited from the PDP × loonshot cell are on the record and waiting on a decision — the stamp lands when they are accepted or overridden.",
+      registered_at: "",
+      checkpoint: "Registers when the criteria are confirmed",
+      disposition: "not_yet_evaluated",
+      disposition_note: null,
+    },
+    design: {
+      primary_metric: "Share of orders landing in an under-used slot",
+      baseline: "18.3%",
+      mde: "8% relative",
+      power: 0.8,
+      alpha: 0.05,
+      sample_per_arm: 14200,
+      collected_per_arm: null,
+      arms: ["Control — slot price at checkout only", "Treatment — slot price visible at basket"],
+      planned_runtime_days: 35,
+      actual_runtime_days: null,
+      allocation: "Randomised at household level within four matched delivery catchments",
+      guardrails: ["Total order volume", "Average basket value", "Slot cancellation rate"],
+      design_note:
+        "Constrained by geography, not by budget: slot pricing only varies in four catchments, and those catchments hold roughly 14,200 households per arm over the window. Running to the standard 25,000 floor would mean waiting for population that does not exist.",
+    },
+    owner: "Priya Raman",
+    created_at: "2026-07-24",
+    updated_at: "2026-08-03",
     launched_at: null,
     concluded_at: null,
     segment_tree: null,

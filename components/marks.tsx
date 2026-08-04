@@ -1,4 +1,4 @@
-import { initialsOf } from "@/lib/format";
+import { formatDate, initialsOf } from "@/lib/format";
 import { LOOP_STAGE_ORDER, LOOP_STAGES, RISK_BY, STATUS_BY, TOUCHPOINT_BY } from "@/lib/taxonomy";
 import type { ExperimentStatus, LoopStage, Outcome, RiskCategory, Touchpoint } from "@/lib/types";
 
@@ -136,6 +136,41 @@ export function LoopMeter({ value, showLabel = true }: { value: LoopStage; showL
         Loop stage {index + 1} of 5: {LOOP_STAGES[index].label}
       </span>
     </span>
+  );
+}
+
+/**
+ * The one place violet appears in the whole system. It is a document stamp, and
+ * it is the visual proof that the criteria predate the launch. Lives here rather
+ * than in the Laboratory because Quarantine's graduation step is where the stamp
+ * is actually earned (CONTROL_ROOM_SCOPE.md §5) — the Laboratory only reads it
+ * back afterwards. Two places, one meaning, no second colour.
+ */
+export function RegisteredStamp({ date }: { date: string }) {
+  return (
+    <div
+      className="stamp-in inline-block rounded-[4px] border-2 border-stamp/70 px-3 py-2 text-center"
+      style={{ boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--color-stamp) 25%, transparent)" }}
+    >
+      <p className="font-mono text-[9px] leading-none font-semibold tracking-[0.16em] text-stamp uppercase">
+        Pre-registered
+      </p>
+      <p className="mt-1.5 font-mono text-[12px] leading-none font-semibold text-stamp">{formatDate(date)}</p>
+      <p className="mt-1.5 font-mono text-[8px] leading-none tracking-[0.12em] text-stamp/70 uppercase">
+        Before launch
+      </p>
+    </div>
+  );
+}
+
+export function UnregisteredStamp({ note = "Locks at brief" }: { note?: string }) {
+  return (
+    <div className="inline-block rounded-[4px] border-2 border-dashed border-rule-2 px-3 py-2 text-center">
+      <p className="font-mono text-[9px] leading-none font-semibold tracking-[0.16em] text-ink-4 uppercase">
+        Not registered
+      </p>
+      <p className="mt-1.5 font-mono text-[10px] leading-none text-ink-4">{note}</p>
+    </div>
   );
 }
 

@@ -11,7 +11,7 @@ import { effectTone } from "@/lib/segments";
 import { RIGOR_BY, RISK_BY } from "@/lib/taxonomy";
 import type { Experiment } from "@/lib/types";
 import { TONE } from "./effect-tone";
-import { BrandMark, RiskChip, StatusMark } from "./marks";
+import { BrandMark, RegisteredStamp, RiskChip, StatusMark, UnregisteredStamp } from "./marks";
 import { RecordHeader } from "./record-header";
 import { SegmentedControl } from "./segmented-control";
 import { Forest, SegmentTree } from "./segment-tree";
@@ -312,40 +312,6 @@ function KillCriteriaBlock({ experiment: e }: { experiment: Experiment }) {
           )}
         </>
       )}
-    </div>
-  );
-}
-
-/**
- * The one place violet appears in the whole system. It is a document stamp, and
- * it is the visual proof that the criteria predate the launch.
- */
-function RegisteredStamp({ date }: { date: string }) {
-  return (
-    <div
-      className="stamp-in inline-block rounded-[4px] border-2 border-stamp/70 px-3 py-2 text-center"
-      style={{ boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--color-stamp) 25%, transparent)" }}
-    >
-      <p className="font-mono text-[9px] leading-none font-semibold tracking-[0.16em] text-stamp uppercase">
-        Pre-registered
-      </p>
-      <p className="mt-1.5 font-mono text-[12px] leading-none font-semibold text-stamp">
-        {formatDate(date)}
-      </p>
-      <p className="mt-1.5 font-mono text-[8px] leading-none tracking-[0.12em] text-stamp/70 uppercase">
-        Before launch
-      </p>
-    </div>
-  );
-}
-
-function UnregisteredStamp() {
-  return (
-    <div className="inline-block rounded-[4px] border-2 border-dashed border-rule-2 px-3 py-2 text-center">
-      <p className="font-mono text-[9px] leading-none font-semibold tracking-[0.16em] text-ink-4 uppercase">
-        Not registered
-      </p>
-      <p className="mt-1.5 font-mono text-[10px] leading-none text-ink-4">Locks at brief</p>
     </div>
   );
 }

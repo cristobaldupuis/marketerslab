@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BRANDS } from "@/lib/data/brands";
-import { EXPERIMENTS } from "@/lib/data/experiments";
+import { useRegister } from "@/lib/quarantine";
 import {
   LabMark,
   ObservatoryIcon,
@@ -18,9 +18,9 @@ type Section = {
   icon: (props: { className?: string }) => React.ReactNode;
   name: string;
   href: string;
-  /** Not built yet (Pass C) — shown so the group reads as a whole even
-   *  before every room in it has something to show. */
-  comingSoon?: boolean;
+  /** Live count in the badge slot, where Quarantine's "Soon" label used to
+   *  sit before Pass C built it. Zero renders nothing. */
+  count?: number;
 };
 
 /**
@@ -38,26 +38,32 @@ type Section = {
  * gone somewhere else isn't navigation, it's decoration. They're reachable
  * from any card, and cross-link to each other once you're inside one.
  */
-const GROUPS: { label: string; sections: Section[] }[] = [
-  {
-    label: "Signal",
-    sections: [
-      { icon: ObservatoryIcon, name: "Observatory", href: "/observatory" },
-      { icon: VivariumIcon, name: "Vivarium", href: "/vivarium" },
-    ],
-  },
-  {
-    label: "Protocol",
-    sections: [
-      { icon: QuarantineIcon, name: "Quarantine", href: "/quarantine", comingSoon: true },
-      { icon: SupercomputerIcon, name: "Supercomputer", href: "/supercomputer" },
-    ],
-  },
-];
+function groups(heldCount: number): { label: string; sections: Section[] }[] {
+  return [
+    {
+      label: "Signal",
+      sections: [
+        { icon: ObservatoryIcon, name: "Observatory", href: "/observatory" },
+        { icon: VivariumIcon, name: "Vivarium", href: "/vivarium" },
+      ],
+    },
+    {
+      label: "Protocol",
+      sections: [
+        { icon: QuarantineIcon, name: "Quarantine", href: "/quarantine", count: heldCount },
+        { icon: SupercomputerIcon, name: "Supercomputer", href: "/supercomputer" },
+      ],
+    },
+  ];
+}
 
 export function SidebarNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Same pool the Observatory reads, so the record count under the wordmark
+  // can never claim records the Observatory isn't showing.
+  const { register, held } = useRegister();
+  const navGroups = groups(held.length);
 
   // Close the mobile drawer on navigation. Adjusted during render (React's
   // documented pattern for state derived from a changing prop) rather than in
@@ -102,12 +108,12 @@ export function SidebarNav() {
             Growth science
           </p>
           <p className="field-label mt-3">
-            {BRANDS.length} brands · {EXPERIMENTS.length} records
+            {BRANDS.length} brands · {register.length} records
           </p>
         </div>
 
         <nav aria-label="Sections" className="flex-1 overflow-y-auto border-t border-rule px-3 py-4">
-          {GROUPS.map((group, i) => (
+          {navGroups.map((group, i) => (
             <div key={group.label} className={i === 0 ? "" : "mt-5"}>
               <p className="field-label px-2.5">{group.label}</p>
               <ul className="mt-2 space-y-0.5">
@@ -157,44 +163,31 @@ function SectionLink({ section, pathname }: { section: Section; pathname: string
   const isActive = pathname.startsWith(section.href);
   const Icon = section.icon;
 
-  const inner = (
-    <>
-      <Icon className={`size-[16px] shrink-0 ${isActive ? "text-ink" : section.comingSoon ? "text-ink-4" : "text-ink-3"}`} />
-      <span
-        className={`min-w-0 flex-1 truncate text-[13px] leading-tight font-medium ${
-          isActive ? "text-ink" : section.comingSoon ? "text-ink-4" : "text-ink-2"
-        }`}
-      >
-        {section.name}
-      </span>
-      {section.comingSoon && (
-        <span className="shrink-0 font-mono text-[9.5px] font-medium tracking-[0.12em] text-ink-4 uppercase">
-          Soon
-        </span>
-      )}
-    </>
-  );
-
-  const rowClass = "flex items-center gap-2.5 rounded-[5px] px-2.5 py-[7px] transition-colors";
-
-  if (section.comingSoon) {
-    return (
-      <li>
-        <div aria-disabled className={`${rowClass} cursor-not-allowed opacity-70`} title="Not built yet">
-          {inner}
-        </div>
-      </li>
-    );
-  }
-
   return (
     <li>
       <Link
         href={section.href}
         aria-current={isActive ? "page" : undefined}
-        className={`${rowClass} ${isActive ? "bg-surface" : "hover:bg-surface/60"}`}
+        className={`flex items-center gap-2.5 rounded-[5px] px-2.5 py-[7px] transition-colors ${
+          isActive ? "bg-surface" : "hover:bg-surface/60"
+        }`}
       >
-        {inner}
+        <Icon className={`size-[16px] shrink-0 ${isActive ? "text-ink" : "text-ink-3"}`} />
+        <span
+          className={`min-w-0 flex-1 truncate text-[13px] leading-tight font-medium ${
+            isActive ? "text-ink" : "text-ink-2"
+          }`}
+        >
+          {section.name}
+        </span>
+        {section.count !== undefined && section.count > 0 && (
+          <span
+            title={`${section.count} held`}
+            className="shrink-0 rounded-full border border-rule-2 px-1.5 py-px font-mono text-[9.5px] leading-[1.5] font-medium text-ink-3"
+          >
+            {section.count}
+          </span>
+        )}
       </Link>
     </li>
   );
