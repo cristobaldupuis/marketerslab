@@ -36,13 +36,13 @@ scientist would use at a different stage of running an experiment. Full definiti
 | **Microscope** | Close inspection of one record — hypothesis, verdict, headline, nothing else in the frame | `/microscope/[id]` | ✅ Built |
 | **Vivarium** | Live specimens under observation — experiments currently running | `/vivarium` | ✅ Built |
 | **Field Station** | Read-only observation of live ad accounts — the outpost, reporting on a population it never touches | `/field-station` (planned) | ⏳ Not started (Pass F — see [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md)) |
-| **Quarantine** | Pre-register triage — an experiment held here until its kill criteria are confirmed | `/quarantine` (planned) | ⏳ Not started |
+| **Quarantine** | Pre-register triage — an experiment held here until its kill criteria are confirmed | `/quarantine` | ✅ Built |
 | **Supercomputer** | AI/agentic tooling — plan-builder, roadmap generator | `/supercomputer` | ✅ Built |
 
 A persistent left sidebar lists the four sections you can land on directly, grouped as
-**Signal** (Observatory, Vivarium) and **Protocol** (Quarantine, Supercomputer). Quarantine
-appears disabled/"coming soon" until its pass lands; Field Station joins **Signal** once
-Pass F builds it. Laboratory and Microscope are real,
+**Signal** (Observatory, Vivarium) and **Protocol** (Quarantine, Supercomputer). Quarantine's
+row carries a live count of how many records are being held; Field Station joins **Signal**
+once Pass F builds it. Laboratory and Microscope are real,
 built sections but aren't sidebar rows — both only resolve to a destination once a record
 is already in view, so they're reached from a card or from each other, not from the
 sidebar; see the note at the top of `DEFINITIONS.md`.
@@ -56,11 +56,14 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
 
 - **Data model** — `Experiment` and `Brand` in `lib/types.ts`, tagged on all four taxonomy
   axes, with a pre-registered `design` (power, MDE, sample) and `kill_criteria`.
-- **Seeded dataset** — 3 brands, 20 experiments in `lib/data/`. Every touchpoint, loop stage,
-  risk category and brand has several examples; statuses and verdicts are varied.
-- **Observatory (`/observatory`)** — the landing view. A masthead (last-synced timestamp,
-  read off the register; a link into Supercomputer's plan-builder to brief a new
-  experiment) and a stat-tile strip sit above two views, toggled with a segmented control:
+- **Seeded dataset** — 3 brands, 23 experiments in `lib/data/`. Every touchpoint, loop stage,
+  risk category and brand has several examples; statuses and verdicts are varied. 18 are in
+  the register; the other 5 are held in Quarantine and are deliberately invisible everywhere
+  else until they clear.
+- **Observatory (`/observatory`)** — the landing view over the register. A masthead
+  (last-synced timestamp, read off the register; how many records are held in Quarantine; a
+  link into Supercomputer's plan-builder to brief a new experiment) and a stat-tile strip sit
+  above two views, toggled with a segmented control:
   - **Cards** — the grid, filterable by all four axes with lightweight chips. Filters
     survive a trip into a record and back. Each card carries a timeline note ("Launched
     …" / "Briefed …", off real dates) and an owner mark.
@@ -82,6 +85,16 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
     with brand as the root split. Disabled for records with no family.
 - **Vivarium (`/vivarium`)** — every experiment currently `status: "running"`, isolated
   from the rest of the register so "what's live right now" doesn't require a filter click.
+- **Quarantine (`/quarantine`)** — the pre-register checkpoint. A record is held while
+  `kill_criteria_confirmed_at` is null, meaning nobody has yet accepted or overridden the
+  criteria it inherits from its touchpoint × risk-class cell. Held records are *absent* from
+  the Observatory, the priority tree and the record count — not marked there — so every
+  count on that page reads one pool and none of them can disagree. The confirm step inherits
+  the cell's four criteria, reads them against the design actually briefed on the record
+  ("powered for 14,200 per arm, under the 25,000 floor"), and requires a checkbox
+  acknowledging any deviation before it will set `kill_criteria_overridden`. Confirming
+  clears the record for the browser session and nothing more — there is no persistence layer,
+  and the page says that plainly rather than implying a write. See `lib/quarantine.ts`.
 - **Supercomputer (`/supercomputer`)** — the plan-builder and roadmap generator behind one
   mode switch, because they're one engine called at two points in the lifecycle. The
   plan-builder takes industry/stage/budget/touchpoint and returns ranked, pre-registered
@@ -103,8 +116,8 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
 - **Kill-criteria templates** — `lib/data/kill-criteria-templates.ts`, six templates
   covering the touchpoint × risk-class matrix (some cells intentionally share a template).
   Every seeded experiment references one via `kill_criteria_template_id`; three carry a
-  conscious `kill_criteria_overridden: true` deviation. No UI reads this yet — it's the data
-  model Quarantine (Pass C) will triage against.
+  conscious `kill_criteria_overridden: true` deviation. Quarantine's confirm step is what
+  reads and sets these.
 
 ### The four records that carry trees
 
@@ -123,9 +136,8 @@ See [`ROADMAP.md`](./ROADMAP.md) for the full sequencing. Short version:
 
 | Feature | Section | Slot in the code |
 | --- | --- | --- |
-| Kill-criteria override confirm-step UI | Feeds Quarantine's triage flow | The data model (`lib/data/kill-criteria-templates.ts` + `Experiment` fields) is built; no UI reads it yet |
-| Quarantine triage view + graduation flow | Quarantine | New `app/quarantine/` route |
-| Connected ad accounts, flagging, and the draft-to-Quarantine hand-off | Field Station | New `lib/external/` module and `app/field-station/` route. `lib/types.ts` does not change. Scoped as Pass F in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md) |
+| Persisting a confirmation | Quarantine | The confirm step is built and its effect is real, but it lives in a module-scope session store (`lib/quarantine.ts`) because there is nothing to write to. A record's Microscope/Laboratory pages therefore still render its seeded `kill_criteria` after it graduates; the receipt under "Cleared this session" shows what a write would have landed |
+| Connected ad accounts, flagging, and the draft-to-Quarantine hand-off | Field Station | New `lib/external/` module and `app/field-station/` route. `lib/types.ts` does not change. Scoped as Pass F in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md); F5's landing pad now exists — a draft is held on `kill_criteria_confirmed_at: null` |
 | Case-study generator | (unassigned — likely Laboratory or a new section) | Composes from a record plus its tree. Deterministic composition is preferred over a model call here — it cannot hallucinate a number that contradicts the tree beside it. |
 
 Also out of scope by design: real auth and real multi-tenancy. Real platform integrations
@@ -146,7 +158,9 @@ system.
 
 Colour is rationed and always semantic — navy for franchise, ochre for loonshot (always drawn
 with a dashed edge, because its boundaries genuinely are provisional), blue for running, green
-for won, rust for lost, and violet exactly once, on the pre-registration stamp. Taxonomy is
+for won, rust for lost, and violet on exactly one thing, the pre-registration stamp: earned in
+Quarantine when the criteria are confirmed, read back in the Laboratory afterwards, one
+component in `components/marks.tsx` either way. Taxonomy is
 carried by chips, state by glyph marks, so the two channels never compete inside one card.
 
 The tree reuses the won/lost pair for effect direction and stays neutral wherever an interval

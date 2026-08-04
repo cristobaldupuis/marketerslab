@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BRANDS } from "@/lib/data/brands";
-import { EXPERIMENTS } from "@/lib/data/experiments";
 import { formatDate } from "@/lib/format";
 import { FAMILIES } from "@/lib/patterns";
+import { useRegister } from "@/lib/quarantine";
 import { LOOP_STAGES, RISK_CATEGORIES, TOUCHPOINTS } from "@/lib/taxonomy";
 import type { Experiment, LoopStage, RiskCategory, Touchpoint } from "@/lib/types";
 import { ExperimentCard } from "./experiment-card";
@@ -36,7 +36,9 @@ const rememberFilters = (next: Filters) => {
 };
 
 /** Newest activity first — the register is a working document, not an archive. */
-const ORDERED = [...EXPERIMENTS].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+function ordered(register: Experiment[]): Experiment[] {
+  return [...register].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+}
 
 function matches(e: Experiment, f: Filters): boolean {
   return (
@@ -48,17 +50,25 @@ function matches(e: Experiment, f: Filters): boolean {
 }
 
 /**
- * Observatory — the wide-angle view. Every record, filterable by the four
- * taxonomy axes, ordered by recent activity. Formerly the unnamed landing
- * ("register") view; see DEFINITIONS.md.
+ * Observatory — the wide-angle view. Every record in the register, filterable
+ * by the four taxonomy axes, ordered by recent activity. Formerly the unnamed
+ * landing ("register") view; see DEFINITIONS.md.
+ *
+ * "In the register" is doing work since Pass C: records held in Quarantine are
+ * absent from every surface on this page — the grid, the counts, the six stat
+ * tiles and the priority tree all read the same pool out of `useRegister()`, so
+ * a tile can never disagree with the grid beneath it. The masthead says how many
+ * are being held and links there, which is the only place they can be read.
  */
 type View = "cards" | "tree";
 
 export function ObservatoryView() {
+  const { register, held } = useRegister();
   const [filters, setFiltersState] = useState<Filters>(readLastFilters);
   const [view, setView] = useState<View>("cards");
 
-  const results = useMemo(() => ORDERED.filter((e) => matches(e, filters)), [filters]);
+  const all = useMemo(() => ordered(register), [register]);
+  const results = useMemo(() => all.filter((e) => matches(e, filters)), [all, filters]);
   const activeCount = Object.values(filters).reduce((n, arr) => n + arr.length, 0);
 
   function setFilters(next: Filters) {
@@ -76,7 +86,7 @@ export function ObservatoryView() {
 
   return (
     <>
-      <Thesis />
+      <Thesis register={register} heldCount={held.length} />
 
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <div className="flex items-center gap-3 border-b border-rule pb-5">
@@ -92,16 +102,16 @@ export function ObservatoryView() {
           />
           <span className="ml-auto hidden font-mono text-[11px] text-ink-3 sm:inline">
             {view === "cards"
-              ? results.length === ORDERED.length
-                ? `${ORDERED.length} records`
-                : `${results.length} of ${ORDERED.length} records`
+              ? results.length === all.length
+                ? `${all.length} records`
+                : `${results.length} of ${all.length} records`
               : "What to run next, by loop stage"}
           </span>
         </div>
 
         {view === "tree" ? (
           <div className="pt-8">
-            <PriorityTree />
+            <PriorityTree register={register} />
           </div>
         ) : (
           <>
@@ -161,9 +171,9 @@ export function ObservatoryView() {
 
               <div className="flex items-center gap-3 border-t border-rule px-4 py-2.5">
                 <span className="font-mono text-[11px] text-ink-3 sm:hidden">
-                  {results.length === ORDERED.length
-                    ? `${ORDERED.length} records`
-                    : `${results.length} of ${ORDERED.length} records`}
+                  {results.length === all.length
+                    ? `${all.length} records`
+                    : `${results.length} of ${all.length} records`}
                 </span>
                 {activeCount > 0 && (
                   <button
@@ -181,7 +191,7 @@ export function ObservatoryView() {
               <div className="mt-8 rounded-[6px] border border-dashed border-rule-2 px-6 py-16 text-center">
                 <p className="text-[15px] text-ink">Nothing in the register matches that combination.</p>
                 <p className="mx-auto mt-1.5 max-w-md text-[13px] text-ink-2">
-                  Widen an axis, or clear the filters to see all {ORDERED.length} records.
+                  Widen an axis, or clear the filters to see all {all.length} records.
                 </p>
                 <button
                   type="button"
@@ -209,19 +219,24 @@ export function ObservatoryView() {
   );
 }
 
-/** Last touch across the whole register — real data, not a fabricated sync
- *  clock. `updated_at` is already maintained on every record. */
-function lastSyncedAt(): string {
-  return EXPERIMENTS.reduce((max, e) => (e.updated_at > max ? e.updated_at : max), EXPERIMENTS[0].updated_at);
+/** Last touch across the register — real data, not a fabricated sync clock.
+ *  `updated_at` is already maintained on every record. Reads the register
+ *  rather than every record, because a held record has not entered it and its
+ *  activity is not the register's activity. */
+function lastSyncedAt(register: Experiment[]): string {
+  return register.reduce((max, e) => (e.updated_at > max ? e.updated_at : max), register[0].updated_at);
 }
 
-function Thesis() {
+function Thesis({ register, heldCount }: { register: Experiment[]; heldCount: number }) {
   const stats = {
-    running: EXPERIMENTS.filter((e) => e.status === "running").length,
-    planned: EXPERIMENTS.filter((e) => e.status === "planned").length,
-    won: EXPERIMENTS.filter((e) => e.outcome === "won").length,
-    killed: EXPERIMENTS.filter((e) => e.status === "killed").length,
-    loonshotsLive: EXPERIMENTS.filter((e) => e.status === "running" && e.risk_category === "loonshot").length,
+    running: register.filter((e) => e.status === "running").length,
+    planned: register.filter((e) => e.status === "planned").length,
+    won: register.filter((e) => e.outcome === "won").length,
+    killed: register.filter((e) => e.status === "killed").length,
+    loonshotsLive: register.filter((e) => e.status === "running" && e.risk_category === "loonshot").length,
+    // Families are derived from titles across every record, held or not, and a
+    // held record has no tree to pool — so this one is unaffected by Quarantine
+    // rather than being read off a different pool by accident.
     patterns: FAMILIES.length,
   };
 
@@ -231,7 +246,18 @@ function Thesis() {
         <div>
           <p className="field-label">Observatory</p>
           <p className="mt-1.5 font-mono text-[11px] leading-none text-ink-3">
-            Last synced {formatDate(lastSyncedAt())}
+            Last synced {formatDate(lastSyncedAt(register))}
+            {heldCount > 0 && (
+              <>
+                {" · "}
+                <Link
+                  href="/quarantine"
+                  className="underline decoration-rule-2 underline-offset-[3px] transition-colors hover:text-ink hover:decoration-ink"
+                >
+                  {heldCount} held in Quarantine
+                </Link>
+              </>
+            )}
           </p>
         </div>
         <Link

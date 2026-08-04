@@ -60,8 +60,9 @@ recorded here so they're easy to revisit rather than archaeology later):
   `useEffect`-plus-`setState` sync pattern — see `components/theme-toggle.tsx`).
 - **Quarantine and Supercomputer show in the sidebar now, disabled**, labeled "Coming
   soon," so the six-section IA reads as a whole before Pass C/D exist.
-  **Partly superseded in Pass D** — Supercomputer shipped and is a live sidebar row.
-  Quarantine is still the only `comingSoon` entry in `components/sidebar-nav.tsx`.
+  **Superseded in Pass D and again in Pass C** — Supercomputer shipped first, Quarantine
+  second, and `comingSoon` no longer exists in `components/sidebar-nav.tsx`. Quarantine's
+  badge slot now carries its live held count.
 - **Sidebar's Laboratory/Microscope links are context-aware**: disabled ("Open a record
   first") until you're already viewing one of the two, at which point both links jump to
   the *same record* in the other section — lets you flip Microscope ↔ Laboratory while
@@ -130,28 +131,112 @@ once Pass C starts)
   an inline sketch of the shape, not a scope change.
 - Override UX (design now, build later): experiments inherit criteria from their matrix
   cell by default. Editing any inherited value triggers a lightweight confirm step — a
-  checkbox acknowledging the deviation, no justification text field. That confirm-step UI
-  is **still not built** — Pass B was the data model and migration only, seeded directly
-  rather than through a UI flow. Building the confirm step and wiring it to real edits is
-  Pass C's job, alongside Quarantine itself.
+  checkbox acknowledging the deviation, no justification text field. Pass B was the data
+  model and migration only, seeded directly rather than through a UI flow.
+  **Built in Pass C**, as specified — `components/quarantine-view.tsx`. Pass C also found
+  the gap this entry left open: `kill_criteria_overridden: false` could not tell "inherited
+  on purpose" from "never looked at", so confirmation needed a representation of its own
+  (`kill_criteria_confirmed_at`). See Pass C's first decision.
 
 ---
 
 ## Pass C — Quarantine
 
-**Status:** Not started
+**Status:** Done
 **Scope:** Medium
 **Depends on:** Pass B (needs `kill_criteria_template_id` / `kill_criteria_overridden` to
 know who belongs in Quarantine)
 
-- New `/quarantine` route and view.
-- Entry logic: an experiment sits in Quarantine if its kill criteria are unconfirmed —
-  i.e., not yet explicitly inherited or overridden. This is a genuine workflow state, not a
-  filter on top of the register.
-- Override confirm-step UI (the checkbox flow described in Pass B).
-- Graduation flow: once kill criteria are confirmed, the experiment leaves Quarantine and
-  enters the normal register flow (visible in Observatory, eligible for Planned/Running/etc.
-  status).
+- New `/quarantine` route (`app/quarantine/page.tsx`, `components/quarantine-view.tsx`),
+  and Quarantine is no longer the sidebar's one `comingSoon` row — its badge slot now
+  carries a live held count instead of the "Soon" label. `comingSoon` is gone from
+  `components/sidebar-nav.tsx` entirely; nothing else used it.
+- Entry is one condition, and it lives on the record: `kill_criteria_confirmed_at === null`.
+  `lib/quarantine.ts` holds the pools (`registerPool` / `heldPool`), the session store
+  behind graduation, and the `useRegister()` hook the three affected surfaces share.
+- The confirm step Pass B specified and deferred: criteria are inherited from the record's
+  matrix cell, editing any of the four values raises a deviation, and a deviation must be
+  acknowledged with a checkbox — no justification text field — before Confirm enables.
+  Setting `kill_criteria_overridden` is this UI's job, as Pass B said it would be.
+- Five records are held. Two (`EXP-0136`, `EXP-0145`) were already unregistered at ideate
+  stage and needed no new data; three are new (`EXP-0146`, `EXP-0149`, `EXP-0151`). All five
+  have `launched_at: null`, which the AGENTS.md invariant forces rather than merely permits:
+  criteria precede launch, so a record whose criteria are unconfirmed cannot have launched.
+
+**Three decisions made before any UI was written** (they are the actual work of this pass;
+recorded here the way A/B/D/E record theirs):
+
+- **"Unconfirmed" gets its own field: `kill_criteria_confirmed_at: string | null` on
+  `Experiment`.** Pass B left `kill_criteria_overridden: false` meaning two different things —
+  "inherited on purpose" and "nobody has looked at this" — so under the old model Quarantine
+  was empty by construction. The tempting zero-cost alternative was to read
+  `kill_criteria.registered_at === ""`, which two seeded records already carried. It was
+  rejected because those are two different commitments about two different objects:
+  `registered_at` stamps *the freely-typed rule*, `kill_criteria_overridden` describes *the
+  template relationship*, and the Pass B migration produced exactly the divergence — 17
+  records whose prose rule was pre-registered while their template relationship was defaulted
+  by a migration, not decided by a person. `EXP-0146` is seeded to hold that divergence open
+  on purpose: a rule locked by hand on 16 July, a template cell never reconciled with it.
+  Overloading one field to answer both questions would have deleted that state.
+
+  **It is not a fifth taxonomy axis, and the distinction is not a matter of framing.** The
+  four axes are browsing dimensions: each has several values, every record carries one for
+  life, and the filter bar, the pattern view and the priority tree all group by them. This
+  is a one-way gate with two states that flips exactly once, is never filtered on, and no
+  record ever moves back through. An axis you can only traverse in one direction, once, is a
+  state — the same category as `launched_at` and `concluded_at`, which is also why it is a
+  nullable date rather than a boolean: this codebase already spells "has this happened yet"
+  as a nullable timestamp, and a boolean could not be read against `launched_at`.
+
+- **Confirming writes nothing, and the page says so in the page.** There is no persistence
+  layer to write to. The confirmation lives in a module-scope store in `lib/quarantine.ts`
+  for the session — the same module-scope-over-`sessionStorage` reasoning as `lastFilters`
+  in `components/observatory-view.tsx`, read through `useSyncExternalStore` so there is no
+  `setState` in an effect and no first frame to reconcile. Graduating a record really does
+  move it: the Observatory grid, the six stat tiles, the priority tree and the sidebar count
+  all update on the next client render, and a reload restores the seeded state. The page
+  carries a "How this saves — it doesn't" note rather than a button that implies a write it
+  does not make, which is the posture Pass D already takes about proposals.
+
+  The corollary, stated rather than hidden: **the record's own detail views are unchanged by
+  a confirmation.** Microscope and Laboratory still render the seeded `kill_criteria`. The
+  confirm step shows exactly what it *would* write — the four criteria, `overridden`, the
+  overrides map, `confirmed_at`, and the `registered_at` stamp it lands — in a receipt under
+  "Cleared this session". Overlaying session state onto the two server-rendered record routes
+  would be a persistence layer with extra steps.
+
+- **Held records are excluded from the Observatory, not marked in it.** DEFINITIONS.md says a
+  record becomes visible there once it graduates, so a state mark on a card that shouldn't be
+  on the page would contradict the definition. Every count on the Observatory therefore reads
+  one pool out of `useRegister()` — grid, "N records", all six tiles, `lastSyncedAt`, and the
+  priority tree — so a tile cannot disagree with the grid beneath it. The blast radius, checked
+  surface by surface:
+  - `lib/priority.ts`'s `activeExperiments()` now **takes** the register instead of reading
+    `EXPERIMENTS`; `PriorityTree` takes it as a prop. Nothing uncleared is an answer to "what
+    should run next."
+  - The sidebar's "N brands · M records" reads the register too — it sat directly under a
+    number the Observatory was no longer showing.
+  - The masthead gains one line, not a seventh tile: "· N held in Quarantine", linking there.
+    A held record is invisible, so where it went has to be legible; six tiles in a six-column
+    grid is also the shape that survives.
+  - **Vivarium is deliberately untouched.** It filters `status: "running"`, and a held record
+    has never launched, so it cannot be running. Checked, not assumed.
+  - **`lib/patterns.ts` is untouched for a different reason.** Families are derived from
+    titles across every record, and a held record has no `segment_tree` to pool, so
+    `FAMILIES.length` — the "Cross-brand patterns" tile — is unaffected. The three new records
+    carry unique titles so none of them joins or creates a family.
+
+**Seam for Pass F5, per `CONTROL_ROOM_SCOPE.md` §5** — built, not deferred: a Field Station
+draft lands as a `planned` record with `kill_criteria.registered_at` unset **and
+`kill_criteria_confirmed_at: null`**, and it is held on the second of those. Confirming is what
+lands the pre-registration stamp (`CriteriaConfirmation.registered_at`), which is the whole
+reason §5 routes the write path through Quarantine rather than Observatory — a machine-stamped
+registration is a timestamp, not a pre-registration. F5 itself is not built here.
+
+**Watch:** `RegisteredStamp` / `UnregisteredStamp` moved out of `components/laboratory-view.tsx`
+into `components/marks.tsx`, since Quarantine's graduation step is where the stamp is earned and
+the Laboratory only reads it back. Violet is still spent on one meaning, in two places — if a
+third appears, that is the moment to check it is still the same meaning.
 
 ---
 
@@ -252,8 +337,9 @@ so the third level stays unlettered until someone picks it up.
 
 **Status:** Not started
 **Scope:** Large — broken into F1–F6
-**Depends on:** Pass D for the shared generation engine (F4), and **Pass C for the
-Quarantine hand-off (F5)**.
+**Depends on:** Pass D for the shared generation engine (F4), and Pass C for the Quarantine
+hand-off (F5). **Both are now Done** — F5's blocker is cleared, and the field it lands on is
+`kill_criteria_confirmed_at: null`.
 
 Scoped in full in [`CONTROL_ROOM_SCOPE.md`](./CONTROL_ROOM_SCOPE.md). Do not re-derive its
 calls from this summary — it is the source of truth for the schema, the engine seam, the
@@ -271,8 +357,9 @@ OAuth gap and the write path.
   taxonomy axis under any framing; `paid_media` already exists as a touchpoint.
 - The single write path is a drafted proposal landing in Quarantine with
   `kill_criteria.registered_at` **unset** — a machine-stamped registration is a timestamp,
-  not a pre-registration. That is why the hand-off target is Quarantine and why Pass C
-  blocks F5.
+  not a pre-registration. That is why the hand-off target is Quarantine. Pass C built the
+  seam: a draft is held on `kill_criteria_confirmed_at: null`, and confirming is what lands
+  the stamp.
 
 | Sub-pass | Scope | Depends on |
 | --- | --- | --- |
@@ -280,7 +367,7 @@ OAuth gap and the write path.
 | **F2** | `/field-station` route and read-only UI | F1 |
 | **F3** | Deterministic flagging heuristics (`lib/external/rules.ts`) | F1, sequence after F2 |
 | **F4** | LLM narrative layer — `mode: "field_station"` on the Pass D engine | F3 |
-| **F5** | The Quarantine hand-off write path | F4 **and Pass C** |
+| **F5** | The Quarantine hand-off write path | F4 and Pass C (Done) |
 | **F6** | Real OAuth and sync | a persistence decision, plus platform review lead times |
 
 **Watch:** F6 is the only sub-pass that needs infrastructure this codebase has never had — a

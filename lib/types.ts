@@ -128,11 +128,26 @@ export interface Experiment {
    *  see `lib/data/kill-criteria-templates.ts`. */
   kill_criteria_template_id: string;
   /** True if any field below was consciously overridden rather than
-   *  inherited as-is. The confirm-step UI that sets this is Pass C
-   *  (ROADMAP.md) — for now this is seeded directly. */
+   *  inherited as-is. Set by Quarantine's confirm step (Pass C); only
+   *  meaningful once `kill_criteria_confirmed_at` is set. */
   kill_criteria_overridden: boolean;
   /** Only present when `kill_criteria_overridden` is true. */
   kill_criteria_overrides?: Partial<KillCriteriaFields>;
+  /**
+   * When a human accepted or overrode the criteria inherited from this
+   * record's matrix cell. Null until then, and a null record is held in
+   * Quarantine — invisible to the Observatory, the priority tree and the
+   * register count until it graduates.
+   *
+   * Workflow state, not a fifth taxonomy axis. The four axes are browsing
+   * dimensions: each has several values, every record carries one for life,
+   * and the filter bar and the pattern/priority groupings all read them.
+   * This is a one-way gate that flips exactly once and is never filtered on
+   * — the same category of field as `launched_at` and `concluded_at`, which
+   * is also why it is a nullable date rather than a boolean. See ROADMAP.md
+   * Pass C.
+   */
+  kill_criteria_confirmed_at: string | null;
   design: ExperimentDesign;
   owner: string;
   created_at: string;

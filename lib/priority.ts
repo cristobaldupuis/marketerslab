@@ -1,4 +1,3 @@
-import { EXPERIMENTS } from "./data/experiments";
 import { LOOP_STAGE_BY, LOOP_STAGE_ORDER, RISK_CATEGORIES } from "./taxonomy";
 import type { Experiment, LoopStage, RiskCategory } from "./types";
 
@@ -14,8 +13,14 @@ import type { Experiment, LoopStage, RiskCategory } from "./types";
 /** Concluded records (complete/killed) are history, not "what's next." */
 const ACTIVE_STATUSES: Experiment["status"][] = ["planned", "running"];
 
-export function activeExperiments(): Experiment[] {
-  return EXPERIMENTS.filter((e) => ACTIVE_STATUSES.includes(e.status));
+/**
+ * Takes the register rather than reading `EXPERIMENTS` (Pass C): a record held
+ * in Quarantine has not been cleared to run, so it cannot be an answer to "what
+ * should run next," and the caller is the one that knows which records those
+ * are. See `lib/quarantine.ts`.
+ */
+export function activeExperiments(register: Experiment[]): Experiment[] {
+  return register.filter((e) => ACTIVE_STATUSES.includes(e.status));
 }
 
 export interface RiskBucket {

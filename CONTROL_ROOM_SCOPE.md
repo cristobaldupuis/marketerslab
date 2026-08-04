@@ -456,11 +456,15 @@ discipline as `lib/priority.ts`.
 everywhere.
 
 ### F5 — The Quarantine hand-off
-**Depends on:** F4, and **hard-depends on Pass C (Quarantine), which is not started.**
-The confirm step, the draft→`planned` write, `ExperimentOrigin`. State the blocker plainly: F5
-cannot land before Pass C, because without Quarantine's kill-criteria confirmation there is nowhere
-for a draft to land that respects `registered_at` — and dropping it straight into Observatory with a
-machine-stamped registration would break the one invariant `AGENTS.md` calls out by name.
+**Depends on:** F4. **Pass C shipped, so the hard dependency is cleared** (`ROADMAP.md`).
+The confirm step, the draft→`planned` write, `ExperimentOrigin`. Why this was blocked: without
+Quarantine's kill-criteria confirmation there was nowhere for a draft to land that respects
+`registered_at`, and dropping it straight into Observatory with a machine-stamped registration
+would break the one invariant `AGENTS.md` calls out by name. The landing pad exists now — a draft
+is written with `kill_criteria.registered_at: ""` **and `kill_criteria_confirmed_at: null`** (the
+field Pass C added), and it is held on the second of those. F5 builds §5's pre-fill form and
+`ExperimentOrigin`; it does not need to touch `components/quarantine-view.tsx`, which reads any
+held record whatever wrote it.
 
 ### F6 — Real OAuth and sync
 **Depends on:** a persistence decision (§4), Meta App Review, and a Google Ads production developer
@@ -519,7 +523,8 @@ F1 ──> F2 ──> F3 ──> F4 ──> F5
 10. **Does Field Station get a stat tile on Observatory?** The masthead already shows "last synced"
     from `max(updated_at)` across the register. A real external sync timestamp would make one label
     mean two things on one page.
-11. **Pass C is a hard dependency for F5 and hasn't started.** Build C first, or run F1–F4 and park
-    F5 until C lands?
-12. **"Pass D or Pass E first" is moot** — Pass D is built. The live sequencing question is Pass C
-    versus Pass F.
+11. ~~**Pass C is a hard dependency for F5 and hasn't started.**~~ **Resolved:** Pass C was built
+    first. F5 is unblocked, and the hand-off target is `kill_criteria_confirmed_at: null`.
+12. ~~**"Pass D or Pass E first" is moot.**~~ **Resolved:** Pass D and Pass C are both built. F1
+    is the next thing this document blocks on, and it blocks on §7.1 — whether the reversal in
+    the Premise was actually decided.

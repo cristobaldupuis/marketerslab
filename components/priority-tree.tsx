@@ -27,9 +27,14 @@ import { BrandMark, StatusGlyph, StatusMark, TouchpointChip } from "./marks";
  * tree-branch, globals.css) so both trees read as the same visual family —
  * the shape is generic to "nodes with children," only the card content
  * differs at each level.
+ *
+ * Takes the register from the Observatory rather than reading the seed module,
+ * so records held in Quarantine are absent here for the same reason they are
+ * absent from the grid: nothing that has not been cleared to run is an answer
+ * to "what should run next."
  */
-export function PriorityTree() {
-  const pool = activeExperiments();
+export function PriorityTree({ register }: { register: Experiment[] }) {
+  const pool = activeExperiments(register);
   const buckets = pipelineByStage(pool);
   const prompts = pipelinePrompts(buckets);
   const risk = totalsByRisk(pool);
