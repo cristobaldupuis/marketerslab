@@ -240,6 +240,57 @@ third appears, that is the moment to check it is still the same meaning.
 
 ---
 
+## Follow-on — criteria reconciliation
+
+**Status:** Done
+**Scope:** Small
+**Depends on:** Pass C
+**Unlettered on purpose:** Pass F is Field Station, and this is Pass C's own follow-on
+rather than a new direction — same reason Pass E's touchpoint-level tree note stays
+unlettered.
+
+Pass C's confirm step reads a record's design against its criteria, but only inside
+Quarantine — so the check only ever ran on records that had *not* been cleared. Run over
+the register it found 16 of 18 records disagreed with the cell they are standardized
+against. Full reasoning in "What the checkpoint exposed" in `DECISIONS.md`; this is the
+build log.
+
+- **`lib/criteria.ts`** — the check, extracted from `components/quarantine-view.tsx` so
+  Quarantine and the Laboratory run one implementation. `effectiveCriteria()` (cell plus
+  override), `criteriaFit()`, `disagreements()`, `movedFields()`. Computed, never tagged,
+  the same discipline as `findReversal` and `lib/priority.ts`'s prompts — fixing a seeded
+  number makes a finding disappear on its own.
+- **Runtime is read off `actual_runtime_days ?? planned_runtime_days`.** A maximum is a
+  stop rule, so the question is what a test ran to, not what someone wrote down before it
+  started. This is why `EXP-0094` is not flagged: it planned 42 days against a 35-day cap
+  and was stopped at 28. It is also what surfaces `EXP-0123`, stopped at day 7 against a
+  10-day minimum.
+- **`ExperimentDesign` gained `randomisation_unit`** (`household` / `visitor` / `order` /
+  `geo` / `budget`) — the machine-readable half of the `allocation` prose already on every
+  record. `min_sample_size` is only comparable at a user-level unit; a geo- or budget-split
+  test does not accrue people per arm, so the reader states that the floor does not apply
+  rather than asserting a breach. Not an axis: it sits inside `ExperimentDesign` next to
+  `power` and `alpha`, and nothing browses or groups by it.
+- **Two seeded overrides fixed.** `EXP-0130` capped at 21 days against a 28-day design it
+  is currently running; `EXP-0143` capped at 21 against a 42-day design whose primary
+  metric is monthly — its override now runs upward to 42, which is the clearest case in
+  the register for what an override is *for*. Pass B chose those three from `rigor_tier`
+  divergence without reading the designs.
+- **New block on the Laboratory's Kill criteria section**, under the pre-registration
+  timeline: the governing criteria, which fields an override moved, and any disagreement —
+  with the caveat that cells were assigned after these records were written, so a
+  disagreement is an unreconciled record rather than a broken rule.
+- `DECISIONS.md` gained a "Kill criteria" section. It had no entry for Pass B or Pass C,
+  and it is the file that owns the four-axis ceiling — the place someone would look to
+  check whether `kill_criteria_confirmed_at` broke it.
+
+**Watch:** the audit is evidence against Pass B's decision to share the `digital-*`
+templates between paid media and CRM — CRM records accrue households in the tens of
+thousands, paid-media records accrue acquisitions in the hundreds. Splitting that cell is
+a matrix change and a founder call, so it is flagged in `DECISIONS.md`, not made here.
+
+---
+
 ## Pass D — Supercomputer
 
 **Status:** Done
