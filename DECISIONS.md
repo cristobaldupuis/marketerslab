@@ -104,6 +104,86 @@ Pharma/MBA-case-study framing: the rigor exists so it's *available* when
 warranted, not forced on every test. Most experiments don't need the deep view.
 Some absolutely do. Both cases matter.
 
+## Kill criteria: the standard, and the checkpoint that reads it
+
+Kill criteria are the other half of the rigor dial — the dial decides how deeply a
+record is *read*, this decides how tightly it is *stopped*. Two passes built it and
+a third reconciled it; the decisions worth not re-litigating:
+
+- **Criteria are standardized by touchpoint × risk class, not written per record**
+  (Pass B). Six templates cover eight cells, because a cell is a pointer rather than
+  guaranteed-unique data — CRM and paid media share the `digital-*` templates. A
+  record inherits its cell and may override it, which is what makes "franchise dies
+  fast, loonshot gets a runway" an enforced default instead of a slogan. This reads
+  `touchpoint` and `risk_category` off the existing axes and adds nothing to them.
+
+- **"Nobody has confirmed this" needed its own field, and it is not a fifth axis**
+  (Pass C). Pass B's `kill_criteria_overridden: false` meant both "inherited on
+  purpose" and "never looked at", which made Quarantine empty by construction. The
+  free alternative — deriving it from `kill_criteria.registered_at === ""` — was
+  rejected because the stamp is about the freely-typed rule while the override flag
+  is about the template relationship, and the Pass B migration produced exactly that
+  divergence: 17 records whose prose rule was pre-registered while their cell was
+  defaulted by a migration rather than decided by a person. So `Experiment` gained
+  `kill_criteria_confirmed_at: string | null`.
+
+  The four-axis ceiling above still holds, and the test is structural rather than
+  rhetorical: an axis has several values, is carried for life, and is what the filter
+  bar and the pattern and priority groupings read. This is a two-state gate that
+  flips once, is never filtered on, and that no record moves back through — the same
+  category as `launched_at`. **If a future field cannot pass that test, it is an
+  axis, and the answer is no.**
+
+- **A confirmation is not a write, for the same reason a proposal is not a record.**
+  There is no persistence layer, so Quarantine's confirm step clears a record for the
+  session and says so on the page. Pass D set the precedent; the alternative is a
+  button that looks like it writes and doesn't.
+
+- **A held record is absent from the register, not flagged inside it.** The metaphor
+  is a checkpoint before the main population, so a card that shouldn't be on the page
+  isn't on the page. The cost is that every count on the Observatory has to read one
+  pool — a stat tile disagreeing with the grid beneath it is worse than no tile.
+
+### What the checkpoint exposed once it existed (the reconciliation)
+
+Building the check revealed that nothing had ever run it against the register. Pass B
+assigned cells to 20 records that were already written; Pass C only checked records
+that hadn't been cleared yet. Run over the register, it found **16 of 18 records
+disagreed with the criteria they were standardized against**. Three conclusions:
+
+- **Two overrides were simply wrong, and one pointed the wrong way.** `EXP-0130`
+  capped at 21 days while running a 28-day design; `EXP-0143` capped at 21 against a
+  42-day design whose primary metric is *orders per household per month* — a monthly
+  metric cannot be read inside a 35-day standard at all, so its override should have
+  extended the runway, not cut it. Pass B picked those three overrides from
+  `rigor_tier` divergence without reading the designs underneath. Both are fixed.
+
+- **`min_sample_size` did not have one unit.** Paid-media records are sized in
+  acquisitions or matched geographies — `EXP-0094` is powered on **four metro pairs** —
+  and comparing that against a 12,000-household floor compares two different
+  quantities. `ExperimentDesign` gained `randomisation_unit`, the machine-readable
+  half of the `allocation` prose already on every record, so the floor is applied only
+  where it is a comparable number and the reader says "does not apply" instead of
+  asserting a breach it cannot support. That is the same failure mode
+  `CONTROL_ROOM_SCOPE.md` already guards against when mapping Meta's `clicks`.
+
+- **The rest are history, and are stated rather than fixed.** `EXP-0123` was stopped
+  at day 7 against a 10-day minimum — that is a franchise rule doing its job, recorded
+  honestly, not a defect to tidy away. Retro-fitting seeded results so they comply
+  would fabricate a reconciliation that never happened.
+
+Where that leaves the register: of 18 records, **6 are clear, 4 carry only a
+"floor does not apply" note, and 8 carry a real disagreement** — all 8 being history
+that the Laboratory now states on the record. The count dropped from 16 because two
+overrides were wrong, and because reading runtime off what a test actually ran to
+rather than what it planned is the honest comparison against a stop rule.
+
+**Open, and a founder call:** the audit is evidence against Pass B's decision to share
+the `digital-*` templates between paid media and CRM. The CRM records accrue households
+in the tens of thousands; the paid-media records accrue acquisitions in the hundreds.
+"Comparable sample accrual" looks wrong. Splitting the cell is a matrix change, so it is
+flagged here rather than made unilaterally.
+
 ## Decision-tree visualization (the centerpiece)
 
 The single most differentiated piece and the thing that most needs to look

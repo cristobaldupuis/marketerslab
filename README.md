@@ -79,7 +79,10 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
 - **Laboratory (`/laboratory/[id]`)** — the analysis workspace, two tabs:
   - **Experiment** — design of record, the segment tree, kill criteria with a
     pre-registration stamp and timeline, and the risk posture. What used to be the "deep"
-    side of the rigor dial.
+    side of the rigor dial. The kill-criteria block also reads the design against the
+    standard for its touchpoint × risk cell — which fields an override moved, and any
+    disagreement (`EXP-0123` was stopped at day 7 against a 10-day minimum). Derived by
+    `lib/criteria.ts`, never tagged in the seed data.
   - **Patterns** — cross-brand aggregation for any record that's part of a family (same
     title run at more than one brand): pooled effect, I², forest plot, and the segment tree
     with brand as the root split. Disabled for records with no family.
@@ -117,7 +120,11 @@ untouched by this restructuring — see "Things that look arbitrary but are not"
   covering the touchpoint × risk-class matrix (some cells intentionally share a template).
   Every seeded experiment references one via `kill_criteria_template_id`; three carry a
   conscious `kill_criteria_overridden: true` deviation. Quarantine's confirm step is what
-  reads and sets these.
+  reads and sets these, and `lib/criteria.ts` reads any record's design against them —
+  applying the sample floor only where `design.randomisation_unit` makes it a comparable
+  number, since a geo-split test like `EXP-0094` is powered on four metro pairs rather
+  than on households. See "Kill criteria" in `DECISIONS.md` for what that check found when
+  it was first run over the register, and the one matrix question it left open.
 
 ### The four records that carry trees
 
